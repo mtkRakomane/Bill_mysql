@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link rel="stylesheet" href="/styles/styles.css">  
+</head>
+<body>
+
+  <div class="container">
+    <div style="display: flex; justify-content: center; align-items: center;">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSLl5RFBWd70u8xNBu3mBTfHBq-Y1TzCuXJ5w&s" class="img-fluid mb-3" alt="Placeholder image" width="150" height="125">
+    </div>
+    <h1>Login</h1>
+    <form action="/login" method="POST">
+      <div class= "form-group">
+      <label for="reference">Reference:</label>
+      <input type="text" name="reference" placeholder="Reference:" required autocomplete="off"><br>
+    </div>
+      <div class="form-group">
+        <label for="sale_person">Sale Person:</label>
+        <select id="sale_person" name="sale_person" required>
+            <option value="" disabled selected>Select a Sale Person</option>
+            <% salePeoples.forEach(type => { %>
+                <option value="<%= type.sale_person %>"><%= type.sale_person %></option>
+            <% }); %>
+        </select>
+    </div>
+
+    <button type="submit" class="submit-btn">Login</button>
+    </form>
+    <p>Not yet Registered? <a href="/signup">Register up here</a></p> 
+  </div>
+ 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <script>
+    $(document).ready(function() {
+      $('#login-form').on('submit', function(e) {
+        e.preventDefault();  
+  
+        const formData = $(this).serialize();  
+  
+        $.ajax({
+          url: '/login',
+          type: 'POST',
+          data: formData,
+          success: function(response) {
+            if (response === 'Invalid credentials') {
+              alert(response);
+            } else {
+              window.location.href = '/homepage?reference=' + response.reference;
+            }
+          },
+          error: function(error) {
+            alert('Error: ' + error.statusText);
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

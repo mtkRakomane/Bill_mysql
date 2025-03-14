@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Items</title>
+  <style>
+    body { background-color: gray; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid black; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    .action-buttons { display: flex; gap: 8px; }
+    .action-buttons form { display: inline-block; }
+    .action-buttons button, .delete-all-btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    .edit-btn { background-color: #007bff; color: white; }
+    .delete-btn { background-color: #dc3545; color: white; }
+    .delete-all-btn { background-color: #ff5733; color: white; padding: 10px 20px; font-size: 16px; margin-top: 15px; }
+    .delete-btn:hover, .edit-btn:hover, .delete-all-btn:hover { opacity: 0.8; }
+    .center { text-align: center; margin-top: 20px; }
+    .bill-header { background-color: #ddd; text-align: center; font-weight: bold; }
+    .green-text { color: blue; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>All Items</h1>
+  <table>
+    <% for (let bill in groupedItems) { %>
+      <thead>
+        <tr>
+          <th colspan="20" class="bill-header">Bill: <%= bill %></th>
+        </tr>
+        <tr>
+          <th>Item</th>
+          <th>Bill</th>
+          <th>Stock Code</th>
+          <th>Description</th>
+          <th>Quantity</th>
+          <th>Product Type</th>
+          <th>Install Difficulty</th>
+          <th>Unit Cost</th>
+          <th class="green-text">Equipment Margin</th>
+          <th class="green-text">Labour Margin</th>
+          <th>Labour Unit Rate</th>
+          <th>Equipment Unit Rate</th>
+          <th>Labour Total</th>
+          <th>Equipment Total</th>
+          <th>Supplier</th>
+          <th>Lab Hrs</th>
+          <th>Main Hrs</th>
+          <th>Lab Cost</th>
+          <th>Equip Cost</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% groupedItems[bill].forEach((item, index) => { %>
+          <tr>
+            <td><%= index + 1 %></td>
+            <td><%= item.bill %></td>
+            <td><%= item.stock_code %></td>
+            <td><%= item.description %></td>
+            <td><%= item.qty %></td>
+            <td><%= item.product_type %></td>
+            <td><%= item.install_diff %></td>
+            <td><%= item.unit_cost %></td>
+            <td class="green-text">25%</td>
+            <td class="green-text">25%</td>
+            <td>0.00</td>
+            <td>0.00</td>
+            <td>0.00</td>
+            <td>0.00</td>
+            <td><%= item.supply %></td>
+            <td>0.00</td>
+            <td>0.00</td>
+            <td>0.00</td>
+            <td>0.00</td>
+            <td>
+              <div class="action-buttons">
+                <form action="/edit-item/<%= item.id_items %>" method="GET">
+                  <button type="submit" class="edit-btn">Edit</button>
+                </form>
+                <form action="/delete-item/<%= item.id_items %>" method="POST" onsubmit="return confirm('Are you sure?');">
+                  <button type="submit" class="delete-btn">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    <% } %>
+  </table>
+
+  <div class="center">
+    <form action="/delete-all-items/<%= groupedItems.reference %>" method="POST" onsubmit="return confirm('Are you sure you want to delete all items?');">
+      <button type="submit" class="delete-all-btn">Delete All Items</button>
+    </form>
+    <div>
+      <a href="/">Back to Home</a>
+    </div>
+  </div>
+</body>
+</html>

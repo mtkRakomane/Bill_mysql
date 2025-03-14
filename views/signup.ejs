@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signup</title>
+  <link rel="stylesheet" href="/styles/styles.css"> 
+</head>
+<body>
+  <div class="container">
+    <h1>Quote Register!</h1>
+    
+    <form action="/signup" method="POST">
+      <div class= "form-group">
+      <label for="reference">Reference:</label>
+      <input type="text" name="reference" placeholder="Reference:" required autocomplete="off"><br>
+    </div>
+    <div class= "form-group">
+      <label for="job_description">Job Description:</label>
+      <input type="text" name="job_description" placeholder="Job Description:" required autocomplete="off"><br>
+    </div>
+    
+      <div class="form-group">
+        <label for="sale_person">Sale Person:</label>
+        <select id="sale_person" name="sale_person" required>
+            <option value="" disabled selected>Select a Sale Person</option>
+            <% salePeoples.forEach(type => { %>
+                <option value="<%= type.sale_person %>"><%= type.sale_person %></option>
+            <% }); %>
+        </select>
+    </div>
+     
+    <div class="form-group">
+      <label for="sale_cell">Sale Contact:</label>
+      <select id="sale_cell" name="sale_cell" required>
+          <option value="" disabled selected>Select a Sale Contract</option>
+          <% salePeoples.forEach(type => { %>
+              <option value="<%= type.sale_cell %>"><%= type.sale_cell %></option>
+          <% }); %>
+      </select>
+  </div>
+     
+  <div class="form-group">
+    <label for="sale_email">Sale Email:</label>
+    <select id="sale_email" name="sale_email" required>
+        <option value="" disabled selected>Select a Sale Email</option>
+        <% salePeoples.forEach(type => { %>
+            <option value="<%= type.sale_email %>"><%= type.sale_email %></option>
+        <% }); %>
+    </select>
+</div>
+
+<div class="form-group">
+  <label for="saleRole">Sale saleRole:</label>
+  <select id="saleRole" name="saleRole" required>
+      <option value="" disabled selected>Select a Sale Role</option>
+      <% salePeoples.forEach(type => { %>
+          <option value="<%= type.saleRole %>"><%= type.saleRole %></option>
+      <% }); %>
+  </select>
+</div>
+<div class= "form-group">
+      <label for="customer_name">Customer Name:</label>
+      <input type="text" name="customer_name" placeholder="Customer Name:" required autocomplete="off"><br>
+    </div>
+    <div class= "form-group">
+      <label for="customer_cell">Customer Cell:</label>
+      <input type="text" name="customer_cell" placeholder="Customer Cell:" required autocomplete="off"><br>
+    </div>
+    <div class= "form-group">
+      <label for="customer_email">Customer Email:</label>
+      <input type="email" name="customer_email" placeholder="Customer Email:" required autocomplete="off"><br>
+    </div>
+  
+    <button type="submit" class="submit-btn">Register</button>
+    </form>
+
+    <p>Already Registered? <a href="/">Login here</a></p> 
+  </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+          $('#signup-form').on('submit', function(e) {
+            e.preventDefault();  
+      
+            const formData = $(this).serialize();  
+      
+            $.ajax({
+              url: '/signup',  
+              type: 'POST',
+              data: formData,
+              success: function(response) {
+                window.location.href = '/';
+              },
+              error: function(error) {
+                alert('Error: ' + error.statusText);
+              }
+            });
+          });
+        });
+      </script>
+</body>
+</html>

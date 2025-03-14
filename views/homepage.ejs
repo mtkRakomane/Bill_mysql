@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homepage</title>
+    <link rel="stylesheet" href="/styles.css"> 
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            background-color: gray; 
+        }
+        .quote-details {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            width: 60%;
+            margin-bottom: 20px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px; 
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .button {
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            color: white;
+            background: #007bff;
+            border: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <!-- Display Quote Details -->
+    <div class="quote-details">
+        <h2>Quote Details</h2>
+        <p><strong>Job Description:</strong> <%= data.job_description %></p>
+        <p><strong>Sales Person:</strong> <%= data.sale_person %></p>
+        <p><strong>Sales Cell:</strong> <%= data.sale_cell %></p>
+        <p><strong>Sales Email:</strong> <%= data.sale_email %></p>
+        <p><strong>Customer Name:</strong> <%= data.customer_name %></p>
+        <p><strong>Customer Cell:</strong> <%= data.customer_cell %></p>
+        <p><strong>Customer Email:</strong> <%= data.customer_email %></p>
+       
+    </div>
+    <!-- Buttons Section -->
+    <div class="button-container">
+        <a href="/additems?reference=<%= data.reference %>" class="button">Add Items</a>
+        <a href="/Billing" class="btn btn-success">Go to Billings</a>
+        <a href="/overview?reference=<%= data.reference %>" class="button">Overview</a>
+        <a href="/print?reference=<%= data.reference %>" class="button">Print</a>
+        <a href="/allitems" class="btn btn-success">Go to Items</a>
+    </div>
+
+    <div>
+        <a href="/login" class="button">Go back to Login</a>
+    </div>
+
+</body>
+</html>

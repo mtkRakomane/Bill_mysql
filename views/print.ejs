@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print - Quoting System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: gray; 
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #000;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        .subtotal {
+            font-weight: bold;
+            text-align: right;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Quote Details</h1>
+        <p><strong>Customer Name:</strong> <%= groupedItems.customer_name %></p>
+        <p><strong>Customer Email:</strong> <%= groupedItems.customer_email %></p>
+        <p><strong>Job Description:</strong> <%= groupedItems.job_description %></p>
+        <p style="font-size: 13px;"><strong>Date:</strong> <%= new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+    </div>
+    <p style="font-size: 12px;">Dear: </p>
+    <p style="font-size: 12px;">Thank you for affording Bidvest Protea Coin the opportunity to quote for your technology security requirements. We look forward to delivering and supplying the proposed solution.</p>     
+    <span style="font-size: 12px;">
+        Bidvest Protea Coin designs, builds, and maintains stand-alone and integrated security systems. Our knowledge of a wide range of technologies, products, and systems provides cost-effective, reliable, and scalable solutions.
+        We help customers meet standards and exceed compliance regulations from development through installation and ongoing maintenance.
+        From consulting and design, through technology deployment and integration, our team provides turnkey solutions to effectively secure critical infrastructure, energy and chemical facilities, ports, airports, corporate offices, and more.
+    </span>
+    <% groupedItems.bills.forEach(bill => { %>
+        <div>
+            <h2>Bill: <%= bill.bill %></h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Stock Code</th>
+                        <th>Description</th>
+                        <th>Quantity</th>
+                        <th>Product Type</th>
+                        <th>Unit Cost</th>
+                        <th>Total Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% bill.items.forEach((item, index) => { %>
+                        <tr>
+                            <td><%= index + 1 %></td>
+                            <td><%= item.stock_code %></td>
+                            <td><%= item.description %></td>
+                            <td><%= item.qty %></td>
+                            <td><%= item.product_type %></td>
+                            <td>R <%= item.unit_cost %></td>
+                            <td>R <%= item.total_price %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+                <tbody>
+                    <tr>
+                        <td colspan="6"><strong>Sundries and Consumables:</strong></td>
+                        <td><strong>R <%= groupedItems.sundries_and_consumables %></strong></td>
+                    </tr>
+                    <tr>
+                        <td colspan="6"><strong>Project Management:</strong></td>
+                        <td><strong>R <%= groupedItems.project_management %></strong></td>
+                    </tr>
+                    <tr>
+                        <td colspan="6"><strong>Installation, Commissioning and Engineering:</strong></td>
+                        <td><strong>R <%= groupedItems.installation_commissioning_engineering %></strong></td>
+                    </tr>
+                    <tr>
+                        <td colspan="5"></td>
+                        <td><strong>Subtotal:</strong></td>
+                        <td><strong>R <%= bill.subtotal %></strong></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+        </div>
+        <hr />
+    <% }) %>
+    <p style="font-size: 12px">Terms and Conditions</p>
+    <div class="terms">
+        <div class="term" style="font-size: 12px">1. Delivery to be confirmed on placement of order.</div>
+        <div class="term" style="font-size: 12px">2. Standard delivery is 2 to 6 weeks, subject to solution design components.</div>
+        <div class="term" style="font-size: 12px">Exclusions and Assumptions: </div> 
+        <div class="term" style="font-size: 12px">SACO</div> 
+        <div class="term" style="font-size: 12px">3. Data transfer, Payroll interface, Shift sensing, Job costing, Mining modules and additional reports unless specifically quoted above.  </div> 
+        <div class="term" style="font-size: 12px">4. customisation after Business Process Analysis not included. </div> 
+        <div class="term" style="font-size: 12px">5. Assistance with system configuration and setup can be provided at the prevailing hourly rate if not quoted for separately.</div> 
+        <div class="term" style="font-size: 12px">6. Network and server architecture to be provided by client, unless quoted for separately.</div> 
+        <div class="term" style="font-size: 12px">7.  Static IP addresses required for biometric and controller devices.</div> 
+        <div class="term" style="font-size: 12px">Technical Security Solutions  </div> 
+        <div class="term" style="font-size: 12px">8. All cable installation more than 3 meter above ground level will be charged at double the stated rate  </div> 
+        <div class="term" style="font-size: 12px">9.  The price quoted for installation assumes that all required cable routes are freely accessible without blockages</div> 
+        <div class="term" style="font-size: 12px">10.   Customer induction training courses, medicals and security certification costs  are excluded unless specified  </div> 
+        <div class="term" style="font-size: 12px">General</div> 
+        <div class="term" style="font-size: 12px">11.   Prices quoted are exclusive of any civil work pertaining to the installation.</div> 
+        <div class="term" style="font-size: 12px">12. 220V AC power supply to be provided by the client within 3 metres of each installation point where required, unless specifically quoted for.</div> 
+        <div class="term" style="font-size: 12px">13.  No work will commence without an official company order & a signed copy of this quotation and Terms and Conditions</div> 
+        <div class="term" style="font-size: 12px">14.  All equipment remains the property of BPC until the account is settled in full. </div> 
+        <div class="term" style="font-size: 12px">15.  The pricing provided in the quotation is subject to the Rate of Exchange on the day of quote and subject to supplier pricing not fluctuating more than 3%.  </div> 
+        <div class="term" style="font-size: 12px">16. Payment terms are 30 days from date of invoice.</div> 
+        <div class="term"style="font-size: 12px">17.  It is hereby recorded that the sole function of the service contemplated herein and/or personnel provided for by Bidvest Protea Coin is to endeavour to minimise the risk of 
+            loss or damage (to person, property or otherwise). Bidvest Protea Coin therefore does not warrant or guarantee that it or its personnel will be able to minimise or prevent any such 
+            loss or damage. Bidvest Protea Coin shall not be liable to you or any third party for any loss or damage (to person or property) of whatsoever kind or nature, whether direct, 
+            indirect, special or consequential, arising out of any act, omission, or failure to act on the part of Bidvest Protea Coin or against any claim which may be made against Bidvest 
+            Protea Coin in respect of such loss or damage, and you by your signature hereto agree to indemnify and hold Bidvest Protea Coin harmless against any such loss or damage 
+            (including legal costs and/or expense) incurred by Bidvest Protea Coin. </div> 
+        <div class="term" style="font-size: 12px">18.   At acceptance of service by either your signature hereto or actual inception thereof (whichever is the earlier) whilst legal terms and conditions of an agreement between the 
+            Parties are being finalized, it is agreed that these terms and conditions will govern the relationship between the Parties unless and until an agreement to the contrary has been 
+            concluded. </div> 
+        <div class="term" style="font-size: 12px">19.  You acknowledge having read and understood the foregoing terms and conditions and having no objection in writing thereto by your signature  being duly authorized hereto 
+            irrevocably accept the foregoing to be legal binding and enforceable provisions.   </div> 
+        <div class="term" style="font-size: 12px">20.  Proposal valid only for the period stipulated on this document</div> 
+        <div class="term" style="font-size: 12px">21.   ISP Connectivity to be supplied by the client, for the cost of the client</div>
+    </div>
+    <hr>
+    <div class="signature">
+        <p style="font-size: 12px">Yours Faithfully</p>
+        <p style="font-size: 12px"><%= groupedItems.sale_person %></p>
+        <p style="font-size: 12px">Bidvest Protea Coin</p>
+        <p style="font-size: 12px">Head Office, 16 Eddington Crescent, Highveld, Technopark, Centurion, 0157</p>
+        <p style="font-size: 12px"> <%= groupedItems.sale_cell %> </p>
+        <p style="font-size: 12px">Office: +27 (0) 12 665 8000</p>
+    </div>
+    <div class="footer">
+        <p>&copy; Quoting System</p>
+    </div>
+</body>
+</html>
