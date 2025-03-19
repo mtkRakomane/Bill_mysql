@@ -39,12 +39,12 @@
 <body>
     <div class="header">
         <h1>Quote Details</h1>
-        <p><strong>Customer Name:</strong> <%= groupedItems.customer_name %></p>
+       
         <p><strong>Customer Email:</strong> <%= groupedItems.customer_email %></p>
         <p><strong>Job Description:</strong> <%= groupedItems.job_description %></p>
         <p style="font-size: 13px;"><strong>Date:</strong> <%= new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
     </div>
-    <p style="font-size: 12px;">Dear: </p>
+    <p style="font-size: 12px;">Dear: <%= groupedItems.customer_name %> </p>
     <p style="font-size: 12px;">Thank you for affording Bidvest Protea Coin the opportunity to quote for your technology security requirements. We look forward to delivering and supplying the proposed solution.</p>     
     <span style="font-size: 12px;">
         Bidvest Protea Coin designs, builds, and maintains stand-alone and integrated security systems. Our knowledge of a wide range of technologies, products, and systems provides cost-effective, reliable, and scalable solutions.
