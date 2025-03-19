@@ -116,12 +116,115 @@ app.post('/login', async (req, res) => {
   }
 });
 // ✅ Homepage
-app.get('/homepage', (req, res) => {
-  if (!req.session.user) {
-    return res.redirect('/login');
+app.get('/homepage', async (req, res) => {
+  try {
+    const reference = req.query.reference; // or get it from session/other means
+    if (!reference) {
+      return res.send('Error: No reference provided.');
+    }
+
+    // Fetch data for the reference from the database or from a prior request
+    const dataResult = await executeQuery('SELECT * FROM Quote_details WHERE reference = ?', [reference]);
+    
+    if (dataResult.length === 0) {
+      return res.send('Error: No data found for the provided reference.');
+    }
+
+    const data = dataResult[0]; // Assuming dataResult returns an array
+
+    // Pass the data to the EJS view
+    res.render('homepage', { data });
+
+  } catch (error) {
+    console.error('Error fetching quote details:', error);
+    res.status(500).send('Internal server error');
   }
-  res.render('homepage');
 });
+
+
+// ✅ Delete All Items
+app.post('/delete-all-items/:reference', async (req, res) => {
+  const { reference } = req.params;
+  try {
+    await executeQuery('DELETE FROM items WHERE reference = ?', [reference]);
+    res.redirect('/');
+  } catch (error) {
+    console.error('Error deleting items:', error);
+    res.send('Error deleting items.');
+  }
+});
+// ✅ Add Items
+app.get('/additems', async (req, res) => {
+  try {
+    const salePeoples = await executeQuery('SELECT sale_person, sale_cell, sale_email, saleRole FROM salePeople');
+    const installDifficultyTypes = await executeQuery('SELECT install_diff FROM InstallDifficultyType');
+    const slaMlaTypes = await executeQuery('SELECT sla_mla FROM SlaMlaType');
+    const validateNumTypes = await executeQuery('SELECT validate_num_days FROM ValidateNumType');
+    const productTypes = await executeQuery('SELECT product_type, labour_factor_hrs, maint_lab_factor FROM ProductType');
+    const supplyTypes = await executeQuery('SELECT supply FROM SupplyType');
+
+    const reference = req.query.reference;
+    if (!reference) {
+      return res.send('Error: No reference provided.');
+    }
+
+    res.render('additems', { 
+      reference, 
+      salePeoples, 
+      installDifficultyTypes, 
+      slaMlaTypes, 
+      validateNumTypes, 
+      productTypes, 
+      supplyTypes 
+    });
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).send('Database error');
+  }
+});
+
+app.post('/additems', async (req, res) => {
+  try {
+    const { 
+      reference, bill, stock_code, description, qty, 
+      product_type, install_diff, unit_cost, supply, 
+      labour_hrs, labour_cost, labour_factor_hrs, maint_lab_factor
+    } = req.body;
+
+    if (!reference) {
+      return res.send('Error: Reference is missing.');
+    }
+
+    // Check if the reference exists in Quote_details
+    const referenceResult = await executeQuery(`SELECT * FROM Quote_details WHERE reference = ?`, [reference]);
+    if (referenceResult.length === 0) {
+      return res.send('Error: Reference does not exist in Quote_details');
+    }
+
+    // Insert or update the Bill entry
+    const billResult = await executeQuery(`SELECT * FROM Bills WHERE bill = ? AND reference = ?`, [bill, reference]);
+    if (billResult.length === 0) {
+      await executeQuery(
+        `INSERT INTO Bills (bill, reference, labour_hrs, labour_cost) VALUES (?, ?, ?, ?)`,
+        [bill, reference, labour_hrs || 0, labour_cost || 0]
+      );
+      console.log('Bill inserted successfully');
+    }
+
+    // Insert the Item entry along with product_type and factors
+    await executeQuery(
+      `INSERT INTO Items (reference, bill, stock_code, description, qty, product_type, install_diff, unit_cost, supply, labour_factor_hrs, maint_lab_factor)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [reference, bill, stock_code, description, qty, product_type, install_diff, unit_cost, supply, labour_factor_hrs, maint_lab_factor]
+    );
+
+    res.redirect('/login');
+  } catch (error) {
+    console.error(error);
+    res.send('Database error while processing request');
+  }
+});
+
 // ✅ Print Page
 app.get('/print', async (req, res) => {
   const userRefNum = req.session.user?.reference;
@@ -130,7 +233,7 @@ app.get('/print', async (req, res) => {
 
   try {
     const itemsResult = await executeQuery(`
-      SELECT i.bill, i.stock_code, i.description, i.qty, i.product_type, i.unit_cost, 
+      SELECT i.bill, i.stock_code, i.description, i.qty, i.product_type, i.unit_cost, i.maint_lab_factor, i.labour_factor_hrs,
              q.customer_name, q.customer_email, q.sale_person, q.sale_cell, q.job_description
       FROM items i
       JOIN quote_details q ON i.reference = q.reference
@@ -156,87 +259,29 @@ app.get('/print', async (req, res) => {
       job_description: itemsResult[0]?.job_description || '',
       bills: Object.keys(bills).map(billName => ({
         bill: billName,
-        items: bills[billName].map(item => ({
-          ...item,
-          total_price: (parseFloat(item.unit_cost || 0) * parseFloat(item.qty || 0)).toFixed(2)
-        })),
+        items: bills[billName].map(item => {
+         
+    
+          return {
+            ...item,
+            total_price: (
+              parseFloat(item.unit_cost || 0) *
+              parseFloat(item.qty || 0) 
+            ).toFixed(2)
+          };
+        }),
         subtotal: bills[billName]
-          .reduce((sum, item) => sum + (parseFloat(item.unit_cost || 0) * parseFloat(item.qty || 0)), 0)
+          .reduce((sum, item) => {
+            return sum + (parseFloat(item.unit_cost || 0) * parseFloat(item.qty || 0));
+          }, 0)
           .toFixed(2)
       }))
     };
-
+    
     res.render('print', { groupedItems });
   } catch (error) {
     console.error('Error fetching items:', error);
     res.send('Error retrieving items data.');
-  }
-});
-
-// ✅ Delete All Items
-app.post('/delete-all-items/:reference', async (req, res) => {
-  const { reference } = req.params;
-  try {
-    await executeQuery('DELETE FROM items WHERE reference = ?', [reference]);
-    res.redirect('/');
-  } catch (error) {
-    console.error('Error deleting items:', error);
-    res.send('Error deleting items.');
-  }
-});
-// ✅ Add Items
-app.get('/additems', async (req, res) => { // Added "async"
-  try {
-    const salePeoples = await executeQuery('SELECT sale_person, sale_cell, sale_email, saleRole FROM salePeople');
-    const installDifficultyTypes = await executeQuery('SELECT install_diff FROM InstallDifficultyType');
-    const slaMlaTypes = await executeQuery('SELECT sla_mla FROM SlaMlaType');
-    const validateNumTypes = await executeQuery('SELECT validate_num_days FROM ValidateNumType');
-    const productTypes = await executeQuery('SELECT product_type FROM ProductType');
-    const supplyTypes = await executeQuery('SELECT supply FROM SupplyType');
-
-    const reference = req.query.reference; 
-    if (!reference) {
-      return res.send('Error: No reference provided.');
-    }
-
-    res.render('additems', { reference, salePeoples, installDifficultyTypes, slaMlaTypes, validateNumTypes, productTypes, supplyTypes });
-  } catch (error) { 
-    console.error('Database error:', error);
-    res.status(500).send('Database error');
-  }
-});
-app.post('/additems', async (req, res) => {
-  try {
-    const { reference, bill, stock_code, description, qty, product_type, install_diff, unit_cost, supply, labour_hrs, labour_cost } = req.body;
-
-    if (!reference) {
-      return res.send('Error: Reference is missing.');
-    }
-    const referenceResult = await executeQuery(`SELECT * FROM Quote_details WHERE reference = ?`, [reference]);
-
-    if (referenceResult.length === 0) {
-      return res.send('Error: Reference does not exist in Quote_details');
-    }
-    const billResult = await executeQuery(`SELECT * FROM Bills WHERE bill = ? AND reference = ?`, [bill, reference]);
-
-    if (billResult.length === 0) {
-      await executeQuery(
-        `INSERT INTO Bills (bill, reference, labour_hrs, labour_cost) VALUES (?, ?, ?, ?)`,
-        [bill, reference, labour_hrs || 0, labour_cost || 0]
-      );
-      console.log('Bill inserted successfully');
-    }
-
-    await executeQuery(
-      `INSERT INTO Items (reference, bill, stock_code, description, qty, product_type, install_diff, unit_cost, supply)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [reference, bill, stock_code, description, qty, product_type, install_diff, unit_cost, supply]
-    );
-
-    res.redirect('/login');
-  } catch (error) {
-    console.error(error);
-    res.send('Database error while processing request');
   }
 });
 
@@ -318,7 +363,7 @@ app.get('/edit-item/:id', async (req, res) => {
     res.status(500).send('Error fetching data for edit-item');
   }
 });
-// Edit item route (POST)
+// ✅ Edit item route (POST)
 app.post('/edit-item/:id', async (req, res) => {
   const itemId = req.params.id;  
   const userReference = req.session.user?.reference;
@@ -341,7 +386,7 @@ app.post('/edit-item/:id', async (req, res) => {
     res.status(500).send('Error updating item');
   }
 });
-
+// ✅ DELETE(Post)
 app.post('/delete-item/:id', async (req, res) => {
   const itemId = req.params.id;  
   const userReference = req.session.user?.reference;  
