@@ -10,24 +10,29 @@
 
   <div class="container">
     <h2>Add Item</h2>
-    <form action="/additems" method="POST">
+    <form id="add-item-form" action="/additems" method="POST">
         <input type="hidden" name="reference" value="<%= reference %>">
+        
         <div class="form-group">
-        <label for="bill">Bill Name:</label>
-        <input type="text" name="bill" placeholder="Bill Name:" required autocomplete="off"><br>
+          <label for="bill">Bill Name:</label>
+          <input type="text" name="bill" placeholder="Bill Name:" required autocomplete="off"><br>
         </div>
-        <div class="form-group">     
-        <label for="stock_code">Stock Code:</label>
-        <input type="text" name="stock_code" placeholder="Stock Code:" required autocomplete="off"><br>
-        </div>
+
         <div class="form-group">
-        <label for="description">Description:</label>
-        <input type="text" name="description" placeholder="Description:" required autocomplete="off"><br>
+          <label for="stock_code">Stock Code:</label>
+          <input type="text" name="stock_code" placeholder="Stock Code:" required autocomplete="off"><br>
         </div>
+
         <div class="form-group">
-        <label for="qty">Quantity:</label>
-        <input type="text" name="qty" placeholder="Quantity:" required autocomplete="off"><br>
+          <label for="description">Description:</label>
+          <input type="text" name="description" placeholder="Description:" required autocomplete="off"><br>
         </div>
+
+        <div class="form-group">
+          <label for="qty">Quantity:</label>
+          <input type="text" name="qty" placeholder="Quantity:" required autocomplete="off"><br>
+        </div>
+
         <div class="form-group">
           <label for="product_type">Select Product Type:</label>
           <select id="product_type" name="product_type" required>
@@ -36,20 +41,27 @@
                   <option value="<%= type.product_type %>"><%= type.product_type %></option>
               <% }); %>
           </select>
-      </div>
-        <div class="form-group">
-    <label for="install_diff">Installation Difficulty:</label>
-    <select id="install_diff" name="install_diff" required>
-      <option value="" disabled selected>Select an install difficulty</option>
-      <% installDifficultyTypes.forEach(item => { %>
-        <option value="<%= item.install_diff %>"><%= item.install_diff %></option>
-      <% }); %>
-    </select>
-  </div>
-        <div class="form-group">
-        <label for="unit_cost">Unit Cost:</label>
-        <input type="text" name="unit_cost" placeholder="Unit Cost:" required autocomplete="off" step="0.01"><br>
         </div>
+
+        <!-- Hidden fields to store the factors -->
+        <input type="hidden" id="labour_factor_hrs" name="labour_factor_hrs">
+        <input type="hidden" id="maint_lab_factor" name="maint_lab_factor">
+
+        <div class="form-group">
+          <label for="install_diff">Installation Difficulty:</label>
+          <select id="install_diff" name="install_diff" required>
+            <option value="" disabled selected>Select an install difficulty</option>
+            <% installDifficultyTypes.forEach(item => { %>
+              <option value="<%= item.install_diff %>"><%= item.install_diff %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="unit_cost">Unit Cost:</label>
+          <input type="text" name="unit_cost" placeholder="Unit Cost:" required autocomplete="off" step="0.01"><br>
+        </div>
+
         <div class="form-group">
           <label for="supply">Supplier:</label>
           <select id="supply" name="supply" required>
@@ -58,39 +70,56 @@
                   <option value="<%= type.supply %>"><%= type.supply %></option>
               <% }); %>
           </select>
-      </div> 
+        </div>
+
         <button type="submit" class="submit-btn">Add Item</button>
-      </form>
-      
+    </form>
+
     <br>
     <a href="/homepage?reference=<%= reference %>">
       <button>Back to Homepage</button>
     </a>
   </div>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-      $(document).ready(function() {
-        $('#add-item-form').on('submit', function(e) {
-          e.preventDefault();
-    
-          const formData = $(this).serialize();
-    
-          $.ajax({
-            url: '/additems',
-            type: 'POST',
-            data: formData,
-            success: function(response) {
-      
-              alert('Item added successfully');
-              window.location.href = '/homepage?reference=' + response.reference + '&additionalField=' + response.additionalField;  
-            },
-            error: function(error) {
-              alert('Error: ' + error.statusText);
-            }
-          });
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      $("#product_type").change(function () {
+        var selectedProduct = $(this).val();
+
+        var selectedProductData = <%- JSON.stringify(productTypes) %>.find(function (product) {
+          return product.product_type === selectedProduct;
+        });
+
+        if (selectedProductData) {
+         
+          $("#labour_factor_hrs").val(selectedProductData.labour_factor_hrs);
+          $("#maint_lab_factor").val(selectedProductData.maint_lab_factor);
+        }
+      });
+
+      $('#add-item-form').on('submit', function (e) {
+        e.preventDefault();
+
+        const formData = $(this).serialize();
+
+        $.ajax({
+          url: '/additems',
+          type: 'POST',
+          data: formData,
+          success: function (response) {
+            alert('Item added successfully');
+            
+            window.location.href = '/login?reference=' + response.reference + '&additionalField=' + response.additionalField;
+
+          },
+          error: function (error) {
+            alert('Error: ' + error.statusText);
+          }
         });
       });
-    </script>
-    
+    });
+  </script>
+  
 </body>
 </html>
