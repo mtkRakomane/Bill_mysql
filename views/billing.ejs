@@ -29,48 +29,55 @@
     </style>
 </head>
 <body>
-    <h2>Bill Summary</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Bill No.</th>
-                <th>Labour Hours</th>
-                <th>Labour Cost</th>
-                <th>Labour Selling</th>
-                <th>Equipment Cost</th>
-                <th>Equipment Selling</th>
-                <th>PM Cost</th>
-                <th>PM Selling</th>
-                <th>PM Hours</th>
-                <th>Maint Hrs</th>
-                <th>Sundries Cost</th>
-                <th>Sundries Selling</th>
-                <th>P & G Selling</th>
-                <th>P & G Cost</th>
-                <th>Bill Sell Tot</th>
-                <th>Bill Cost Tot</th>
-                <th>HW Replacement Prov</th>
-            </tr>
-        </thead>
-        <tbody>
-           <td>..</td>
-           <td>0.00</td>
-           <td>0.00</td>
-           <td>0.00</td>
-           <td>0.00</td>
-           <td>0.00</td>
-           <td>0.00</td>
-           <td>0.00</td>
-           <td>0.00</td>
-           <td>0.00</td>
-           <td>0.00</td>
-           <td>0.00</td>
-           <td>0.00</td>
-           <td>0.00</td>
-           <td>0.00</td>
-           <td>0.00</td>
-           <td>0.00</td>
-        </tbody>
-    </table>
+  <h2>Bill Summary</h2>
+  <table>
+      <thead>
+          <tr>
+              <th>Bill No.</th>
+              <th>Labour Hours</th>
+              <th>Labour Cost</th>
+              <th>Labour Selling</th>
+              <th>Equipment Cost</th>
+              <th>Equipment Selling</th>
+              <th>PM Cost</th>
+              <th>PM Selling</th>
+              <th>PM Hours</th>
+              <th>Maint Hrs</th>
+              <th>Sundries Cost</th>
+              <th>Sundries Selling</th>
+              <th>P & G Selling</th>
+              <th>P & G Cost</th>
+              <th>Bill Sell Tot</th>
+              <th>Bill Cost Tot</th>
+              <th>HW Replacement Prov</th>
+          </tr>
+      </thead>
+      <tbody>
+          <% groupedItems.bills.forEach((bill) => { %>
+              <tr>
+                  <td><%= bill.bill %></td>
+                  <td>
+                    <%= bill.totalLabourHours %>
+                  </td>
+                  <td><%= bill.totalLabourHours %></td>
+                  <td><%= bill.bill_labourSell %></td>
+                  <td><%= bill.bill_equipment_cost %></td>
+                  <td><%= bill.bill_equipment_selling %></td>
+                  <td><%= bill.pm_cost %></td>
+                  <td><%= bill.pm_selling %></td>
+                  <td><%= bill.pm_hrs %> </td>
+                  <td><%= bill.totalMaintLabFactor %></td>
+                  <td><%= bill.sundries_cost %></td>
+                  <td><%= bill.sundries_selling %></td>
+                  <td>0.00</td>
+                  <td>0.00</td>
+                  <td><%= bill.bill_tot_selling %></td>
+                  <td><%= bill.bill_tot_cost %></td>
+                  <td>...</td>
+              </tr>
+          <% }); %>
+      </tbody>
+  </table>
 </body>
+
 </html>
