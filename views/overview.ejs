@@ -11,6 +11,22 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>
+        <style>
+            table {
+  width: 100%;
+  border-collapse: collapse; /* Ensures the borders between cells are merged */
+}
+
+table, th, td {
+  border: 1px solid #ddd; /* Adds border to the table, th, and td */
+}
+
+th, td {
+  padding: 8px;
+  text-align: left;
+}
+
+        </style>
 </head>
 <body>
     <div class="container-fluid pt-5 mt-3">
@@ -27,19 +43,19 @@
                             <tbody>
                                 <tr>
                                     <td>Job Description</td>
-                                    <td colspan="3"> <input> </input></td>
+                                    <td colspan="3"> <input type="text" value="<%= groupedItems.job_description %>"> </input></td>
                                 </tr>
                                 <tr>
                                     <td>Customer Name</td>
-                                    <td>..</td>
+                                    <td><%= groupedItems.customer_name%></td>
                                 </tr>
                                 <tr>
                                     <td>Customer Contact Person</td>
-                                    <td colspan="3">..</td>
+                                    <td colspan="3"><%= groupedItems.customer_cell%></td>
                                 </tr>
                                 <tr>
                                     <td>E-mail Address</td>
-                                    <td colspan="3"> ..</td>
+                                    <td colspan="3"> <%=  groupedItems.customer_email%></td>
                                 </tr>
                                 <tr>
                                     <td>Date:</td>
@@ -47,7 +63,7 @@
                                 </tr>
                                 <tr>
                                     <td>Sale's Person</td>
-                                    <td colspan="3">..</td>
+                                    <td colspan="3"><%=  groupedItems.sale_person%></td>
                                 </tr>
                             </tbody>
                             <thead> <tr>
@@ -56,44 +72,40 @@
                            <tbody>
                             <tr>
                                 <td>Total Selling Price</td>
-                                <td><strong>R  <span id="total_sell_project">..</strong></td>
+                                <td><strong>R <%= groupedItems.referenceTotals.totalSellProject %> <span id="total_sell_project">..</strong></td>
                             </tr>
                             <tr>
                                 <td>Total Selling Price inc. VAT</td>
-                                <td><strong>R <span id="total_sell_with_vat">..</strong></td>
+                                <td><strong>R <%= groupedItems.referenceTotals.totalVatSell %> <span id="total_sell_with_vat">..</strong></td>
                             </tr>
                             <tr>
                                 <td>Total Cost</td>
-                                <td><strong>R <span id="total_cost_project">..</span></strong></td>
+                                <td><strong>R <%= groupedItems.referenceTotals.totalCostProject %><span id="total_cost_project">..</span></strong></td>
                             </tr>
                             <tr>
                                 <td>Total Gross Profit</td>
-                                <td><strong> R <span id="total_gross_profit">..</span></strong></td>
+                                <td><strong> R <%= groupedItems.referenceTotals.totalGrossMargin %> <span id="total_gross_profit">..</span></strong></td>
                             </tr>
                             <tr> 
                                 <td>Actual Gross Margin %</td>
-                                                                  
+                                <td> <% 
+                                    let marginColor = '';
+                                    if (groupedItems.referenceTotals.actualGrossMargin  < 15) {
+                                      marginColor = 'red';
+                                    } else if (groupedItems.referenceTotals.actualGrossMargin  >= 15 && groupedItems.referenceTotals.actualGrossMargin <= 20) {
+                                      marginColor = 'orange';
+                                    } else {
+                                      marginColor = 'green';
+                                    }
+                                  %>
+                                  <div 
+                                    style="padding: 10px; color: white; background-color: <%= marginColor %>; border-radius: 5px;">
+                                    <span id="actualGrossMargin"><%= groupedItems.referenceTotals.actualGrossMargin %> </span>
+                                  </div>  </td>                           
                             </tr>
                            </tbody>
                         </table>
-                        <table >
-                            <thead>
-                                <th
-                                colspan="2" style="text-align: center;">Hourly Cost Rates
-                                </th>
-                            </thead>
-                            <tbody>                                    
-                                <tr>
-                                    <td>SLA & MSS Period in Months</td>
-                                   
-                            </td>
-                                </tr>
-                                <tr>
-                                    <td>Number of Preventative Maint. Visits per annum</td>
-                                    <td><input> </input></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    
                     </div>
                 </div>
             </div>
@@ -119,23 +131,23 @@
                             <tbody>
                                 <tr>
                                     <td>Equipment Cost</td>
-                                    <td>R ..</td>
+                                    <td>R <%= groupedItems.referenceTotals.bill_equipment_cost %></td>
                                     <td></td>
-                                    <td>R ..</td>
-                                    <td></td>
-                                    <td>..%</td>
-                                    <td></td>
-                                    <td>..%</td>
+                                    <td>R <%= groupedItems.referenceTotals.bill_equipment_selling %></td>
+                                     <td></td>
+                                    <td><%= groupedItems.referenceTotals.gmEquip %></td> 
+                                    <td></td> 
+                                    <td><%= groupedItems.referenceTotals.pEquipment %> </td>
                                 </tr>
                                 <tr>
                                     <td>Equipment Installation Cost</td>
-                                    <td>R <span id="total_labour_cost">..</span></td>
+                                    <td>R <%= groupedItems.referenceTotals.bill_labourCost %></td>
                                     <td></td>
-                                    <td>R <span id="total_labour_sell">..</span></td>
+                                    <td>R <%= groupedItems.referenceTotals.bill_labourCost %></td>
                                     <td></td>
-                                    <td>..%</td>
+                                    <td><%= groupedItems.referenceTotals.gmLabour %></td>
                                     <td></td>
-                                    <td>..%</td>
+                                    <td><%= groupedItems.referenceTotals.pLabour %>%</td>
                                 </tr>
                                 <tr>
                                     <td>P & G's</td>
@@ -149,29 +161,29 @@
                                 </tr>
                                 <tr>
                                     <td>Sundries and Consumables</td>
-                                    <td>R..</td>
+                                    <td> R <%= groupedItems.referenceTotals.sundries_cost %></td>
                                     <td></td>
-                                    <td>R ..</td>
+                                    <td>R <%= groupedItems.referenceTotals.sundries_selling %></td>
                                     <td></td>
-                                    <td>..%</td>
+                                    <td><%= groupedItems.referenceTotals.gmSundries %></td> 
                                     <td></td>
-                                    <td>..%</td>
+                                    <td><%= groupedItems.referenceTotals.pSundries %> %</td>
                                 </tr>
                                 <tr>
                                     <td>Project Management</td>
-                                    <td>R ..</td>
+                                    <td>R <%= groupedItems.referenceTotals.pm_cost %></td>
                                     <td></td>
-                                    <td>R ..</td>
+                                    <td>R <%= groupedItems.referenceTotals.pm_selling %></td>
                                     <td></td>
-                                    <td>..%</td>
+                                    <td><%= groupedItems.referenceTotals.gmPm %> %</td>
                                     <td></td>
-                                    <td>..%</td>
+                                    <td><%= groupedItems.referenceTotals.pProjectM %> %</td>
                                 </tr>
                                 <tr>
                                     <td>Total</td>
-                                    <td>R <span id="total_cost_project">..</td>
+                                    <td>R <%= groupedItems.referenceTotals.totalCostProject %>..</td>
                                     <td></td>
-                                    <td>R  <span id="total_sell_project">..</td>
+                                    <td>R <%= groupedItems.referenceTotals.totalSellProject %> ..</td>
                                     <td></td>
                                     <td></td>
                                     <td></td>
@@ -190,23 +202,35 @@
                             <tbody>
                                 <tr>
                                     <td>Project Management Hours</td>
-                                    <td>...</td>
-                                    <td>Project Days...</td>
-                                    <td><strong>..</strong></td>
+                                    <td><%= groupedItems.projectHrs %> </td>
+                                    <td>Project Days</td>
+                                    <td><strong><%= groupedItems.projectDays %></strong></td>
                                 </tr>
                                 <tr>
                                     <td>Installation Hours</td>
-                                    <td><strong>...</strong></td>
-                                    <td>Weeks...</td>
-                                    <td><strong>...</strong></td>
+                                    <td><strong><%= groupedItems.projectHrs %> </strong></td>
+                                    <td>Weeks</td>
+                                    <td><strong><%= groupedItems.projectWeeks %> </strong></td>
                                 </tr>
                                 <tr>
-                                    <td>Proposal Validity in days</td>
                                     <td>
-                                   
+                                        <div class="dropdown">
+                                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" id="dropdownMenuButton">
+                                                Proposal Validity in days
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" data-days="30">30 Days</a></li>
+                                                <li><a class="dropdown-item" href="#" data-days="60">60 Days</a></li>
+                                                <li><a class="dropdown-item" href="#" data-days="90">90 Days (3 Months)</a></li>
+                                                <li><a class="dropdown-item" href="#" data-days="180">180 Days (6 Months)</a></li>
+                                                <li><a class="dropdown-item" href="#" data-days="365">365 Days (1 Year)</a></li>
+                                                <li><a class="dropdown-item" href="#" data-days="547">547 Days (18 Months)</a></li>
+                                                <li><a class="dropdown-item" href="#" data-days="732">732 Days (24 Months)</a></li>
+                                            </ul>
+                                        </div>
                                     </td>
-                                    <td></td>
-                                    <td></td>
+                                    <td><p>Proposal Expiry Date: </p></td>
+                                    <td colspan="2"><span id="expiryDate">Select a validity period</span></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -230,5 +254,27 @@
     <!-- Bootstrap JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+<script>
+    document.querySelectorAll(".dropdown-item").forEach(item => {
+        item.addEventListener("click", function(event) {
+            event.preventDefault();
+            
+            let daysToAdd = parseInt(this.getAttribute("data-days"));
+            let today = new Date();
+            
+            // Add selected days to today's date
+            today.setDate(today.getDate() + daysToAdd);
+            
+         // Format the date as DD-MONTH-YYYY
+         let options = { day: "2-digit", month: "long", year: "numeric" };
+            let formattedDate = today.toLocaleDateString("en-GB", options); 
+
+            // Update the button text and display the expiry date
+            document.getElementById("dropdownMenuButton").innerText = `${daysToAdd} Days Selected`;
+            document.getElementById("expiryDate").innerText = formattedDate;
+        });
+    });
+</script>
 </body>
 </html>
