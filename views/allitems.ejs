@@ -65,15 +65,15 @@
             <td><%= item.unit_cost %></td>
             <td class="green-text">25%</td>
             <td class="green-text">25%</td>
-            <td>0.00</td>
-            <td>0.00</td>
-            <td>0.00</td>
-            <td>0.00</td>
+            <td> <%= item.unitLabRate %></td>
+            <td><%=item.equip_unit_rate %></td>
+            <td><%=  item.total_labour %> </td>
+            <td> <%= item.equip_total %> </td>
             <td><%= item.supply %></td>
-            <td>0.00</td>
-            <td>0.00</td>
-            <td>0.00</td>
-            <td>0.00</td>
+            <td><%= item.labour_factor_hrs %></td>
+            <td><%= item.maint_lab_factor %></td>
+            <td><%= item.labour_cost %></td>
+            <td> <%= item.equipmentCost %></td>
             <td>
               <div class="action-buttons">
                 <form action="/edit-item/<%= item.id_items %>" method="GET">
