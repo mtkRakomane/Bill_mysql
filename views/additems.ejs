@@ -7,32 +7,26 @@
   <link rel="stylesheet" href="/styles/styles.css">
 </head>
 <body>
-
   <div class="container">
     <h2>Add Item</h2>
     <form id="add-item-form" action="/additems" method="POST">
-        <input type="hidden" name="reference" value="<%= reference %>">
-        
+        <input type="hidden" name="reference" value="<%= reference %>"> 
         <div class="form-group">
           <label for="bill">Bill Name:</label>
           <input type="text" name="bill" placeholder="Bill Name:" required autocomplete="off"><br>
         </div>
-
         <div class="form-group">
           <label for="stock_code">Stock Code:</label>
           <input type="text" name="stock_code" placeholder="Stock Code:" required autocomplete="off"><br>
         </div>
-
         <div class="form-group">
           <label for="description">Description:</label>
           <input type="text" name="description" placeholder="Description:" required autocomplete="off"><br>
         </div>
-
         <div class="form-group">
           <label for="qty">Quantity:</label>
           <input type="text" name="qty" placeholder="Quantity:" required autocomplete="off"><br>
         </div>
-
         <div class="form-group">
           <label for="product_type">Select Product Type:</label>
           <select id="product_type" name="product_type" required>
@@ -42,11 +36,9 @@
               <% }); %>
           </select>
         </div>
-
         <!-- Hidden fields to store the factors -->
         <input type="hidden" id="labour_factor_hrs" name="labour_factor_hrs">
         <input type="hidden" id="maint_lab_factor" name="maint_lab_factor">
-
         <div class="form-group">
           <label for="install_diff">Installation Difficulty:</label>
           <select id="install_diff" name="install_diff" required>
@@ -56,12 +48,10 @@
             <% }); %>
           </select>
         </div>
-
         <div class="form-group">
           <label for="unit_cost">Unit Cost:</label>
           <input type="text" name="unit_cost" placeholder="Unit Cost:" required autocomplete="off" step="0.01"><br>
         </div>
-
         <div class="form-group">
           <label for="supply">Supplier:</label>
           <select id="supply" name="supply" required>
@@ -71,10 +61,8 @@
               <% }); %>
           </select>
         </div>
-
         <button type="submit" class="submit-btn">Add Item</button>
     </form>
-
     <br>
     <a href="/homepage?reference=<%= reference %>">
       <button>Back to Homepage</button>
