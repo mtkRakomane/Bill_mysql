@@ -8,7 +8,7 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
-            background-color: gray; 
+           
         }
         .header {
             text-align: center;
@@ -37,13 +37,32 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Quote Details</h1>
+    <div class="form-container"> 
+        <div class="card-right">
+            <div class="card-body">
+                <div class="image-text-container">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSLl5RFBWd70u8xNBu3mBTfHBq-Y1TzCuXJ5w&s" class="img-fluid mb-3" alt="Placeholder image" width="200px" height="200px">
+                    <div class="text-container" style="text-align: right;">
+                        <p>222 Witch-Hazel Avenue Highveld Techno Park</p>
+                        <p>Centurion 0157</p>
+                        <p>Tel +27 12665 8000</p>
+                        <p>PO Box 68726 Highveld 0169</p>
+                        <p>South Africa</p>
+                        <p>www.proteacoin.co.za</p>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
        
-        <p><strong>Customer Email:</strong> <%= groupedItems.customer_email %></p>
-        <p><strong>Job Description:</strong> <%= groupedItems.job_description %></p>
+    <div >
+        <p><strong>To:</strong> <%= groupedItems.customer_name%></p>
+        <p><strong>ATT:</strong></p>
+        <p><strong>Email:</strong> <%= groupedItems.customer_email %></p>
         <p style="font-size: 13px;"><strong>Date:</strong> <%= new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+        <p><strong>Re: </strong></p>
     </div>
+    <hr>
     <p style="font-size: 12px;">Dear: <%= groupedItems.customer_name %> </p>
     <p style="font-size: 12px;">Thank you for affording Bidvest Protea Coin the opportunity to quote for your technology security requirements. We look forward to delivering and supplying the proposed solution.</p>     
     <span style="font-size: 12px;">
@@ -53,9 +72,12 @@
     </span>
     <% groupedItems.bills.forEach(bill => { %>
         <div>
-            <h2>Bill: <%= bill.bill %></h2>
+            
             <table>
                 <thead>
+                    <tr>
+                        <th style="background-color: rgb(67, 67, 161);"><%= bill.bill %></th>
+                    </tr>
                     <tr>
                         <th>Item</th>
                         <th>Stock Code</th>
@@ -82,24 +104,25 @@
                 <tbody>
                     <tr>
                         <td colspan="6"><strong>Sundries and Consumables:</strong></td>
-                        <td><strong>R <%= groupedItems.sundries_and_consumables %></strong></td>
+                        <td><strong>R 1 529.47</strong></td>
                     </tr>
                     <tr>
                         <td colspan="6"><strong>Project Management:</strong></td>
-                        <td><strong>R <%= groupedItems.project_management %></strong></td>
+                        <td><strong>R 1 058.82</strong></td>
                     </tr>
                     <tr>
                         <td colspan="6"><strong>Installation, Commissioning and Engineering:</strong></td>
-                        <td><strong>R <%= groupedItems.installation_commissioning_engineering %></strong></td>
+                        <td><strong>R 3 150.30</strong></td>
                     </tr>
                     <tr>
-                        <td colspan="5"></td>
+                        <td colspan="5" style="background-color: rgb(4, 4, 43);"></td>
                         <td><strong>Subtotal:</strong></td>
                         <td><strong>R <%= bill.subtotal %></strong></td>
                     </tr>
                 </tbody>
             </table>
-            
+   
+          
         </div>
         <hr />
     <% }) %>
@@ -148,8 +171,13 @@
         <p style="font-size: 12px"> <%= groupedItems.sale_cell %> </p>
         <p style="font-size: 12px">Office: +27 (0) 12 665 8000</p>
     </div>
+    <div>
+        <button onclick="window.print()">Print this page</button>
+    </div>
+
     <div class="footer">
         <p>&copy; Quoting System</p>
     </div>
+    
 </body>
 </html>
