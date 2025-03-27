@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Summary</title>
+    <link rel="stylesheet" href="/styles.css"> 
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+           
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #000;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        .subtotal {
+            font-weight: bold;
+            text-align: right;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container"> 
+        <div class="card-right">
+            <div class="card-body">
+                <div class="image-text-container">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSLl5RFBWd70u8xNBu3mBTfHBq-Y1TzCuXJ5w&s" class="img-fluid mb-3" alt="Placeholder image" width="200px" height="200px">
+                    <div class="text-container" style="text-align: right;">
+                        <p>222 Witch-Hazel Avenue Highveld Techno Park</p>
+                        <p>Centurion 0157</p>
+                        <p>Tel +27 12665 8000</p>
+                        <p>PO Box 68726 Highveld 0169</p>
+                        <p>South Africa</p>
+                        <p>www.proteacoin.co.za</p>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+<div>
+  <p style="font-size: 13px;"><strong>To:</strong>  <%= billSummaryData.customer_name %></p>
+  <p style="font-size: 13px;"><strong>ATT:</strong>  ...</p>
+  <p style="font-size: 13px;"><strong>Email:</strong><%= billSummaryData.customer_email %></p>
+  <p style="font-size: 13px;"><strong>Date:</strong> <%= new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+  <p style="font-size: 13px;"><strong>RE:</strong> ...</p>
+</div>
+<br>
+<p style="font-size: 12px;">Dear: <%= billSummaryData.customer_name %> </p>
+<p style="font-size: 12px;">Thank you for affording Bidvest Protea Coin the opportunity to quote for your technology security requirements. We look forward to delivering and supplying the proposed solution.</p>     
+<span style="font-size: 12px;">
+    Bidvest Protea Coin designs, builds, and maintains stand-alone and integrated security systems. Our knowledge of a wide range of technologies, products, and systems provides cost-effective, reliable, and scalable solutions.
+    We help customers meet standards and exceed compliance regulations from development through installation and ongoing maintenance.
+    From consulting and design, through technology deployment and integration, our team provides turnkey solutions to effectively secure critical infrastructure, energy and chemical facilities, ports, airports, corporate offices, and more.
+</span>
+<br>
+<table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>DESCRIPTION</th>
+        <th>TOTAL</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% billSummaryData.bills.forEach((bill, index) => { %>
+        <tr>
+          <td><%= index + 1 %></td> 
+          <td>Bill <%= index + 1 %>: <%= bill.bill %></td> 
+          <td>R <%= bill.bill_tot_selling %></td>
+        </tr>
+      <% }); %>
+    </tbody>
+    <tbody>
+        <tr>
+            <td colspan="2"> <strong>Total (Excluding VAT)</strong></td>
+            <td>R <%= billSummaryData.totalSellingSum %> </td>
+        </tr>
+        <tr>
+            <td colspan="2"> <strong>VAT (15%)</strong></td>
+            <td>R <%= billSummaryData.vatAmountForAll %></td>
+        </tr>
+        <tr>
+            <td colspan="2"><strong>Total (Including VAT)</strong></td>
+            <td>R <%= billSummaryData.totalWithVat %></td>
+        </tr>
+    </tbody>
+  </table>
+  <p style="font-size: 12px; text-align: center;">This proposal is valid for days and expires on ....</p>
+ <p style="font-size: 12px; text-align: center;">Standard Terms and conditions Apply</p>
+
+ <table style="width: 20%; margin: 0 auto; border: 1px solid #ccc; border-collapse: collapse; text-align: right; ">
+    <thead>
+        <tr>
+            <th colspan="2" style="text-align: center;">Customer Acceptance</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Print Name</td>
+            <td> __________________________ </td>
+        </tr>
+        <tr>
+            <td>Date</td>
+            <td> __________________________</td>
+        </tr>
+        <tr>
+            <td>Signature</td>
+            <td> __________________________</td>
+        </tr>
+        <tr>
+            <td style="font-size: 12px" colspan="2" style="text-align: center;">By signing this acceptance, I confirm acceptance of the terms and conditions attached here!</td>
+        </tr>
+    </tbody>
+</table>
+
+ <div class="signature">
+    <p style="font-size: 12px">Yours Faithfully</p>
+    <p style="font-size: 12px"><%= billSummaryData.sale_person %></p>
+    <p style="font-size: 12px">Bidvest Protea Coin</p>
+    <p style="font-size: 12px">Head Office, 16 Eddington Crescent, Highveld, Technopark, Centurion, 0157</p>
+    <p style="font-size: 12px"><%= billSummaryData.sale_cell %> </p>
+    <p style="font-size: 12px">Office: +27 (0) 12 665 8000</p>
+</div>
+</body>
+</html>
