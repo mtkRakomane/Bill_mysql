@@ -349,7 +349,6 @@ app.get('/billing', async (req, res) => {
         const totalLabourHours = items.reduce((sum, item) => sum + (parseFloat(item.labour_factor_hrs || 0) * parseFloat(item.qty || 0)), 0);
         const totalMaintLabFactor = items.reduce((sum, item) => sum + (parseFloat(item.maint_lab_factor || 0) * parseFloat(item.qty || 0)), 0);
 
-        // **New Calculations**
         const bill_labourCost = items.reduce((sum, item) => sum + (parseFloat(item.labour_factor_hrs || 0) * parseFloat(item.qty || 0)), 0);
         const bill_labourSell = items.reduce((sum, item) => sum + parseFloat((item.total_labour || 0) * parseFloat(item.qty || 0)), 0);
 
@@ -568,6 +567,7 @@ app.get('/overview', async (req, res) => {
   if (!userRefNum) return res.redirect('/');
 
   try {
+    // Fetch items and relevant details from the database
     const itemsResult = await executeQuery(
       `SELECT i.bill, i.stock_code, i.description, i.qty, i.product_type, i.unit_cost, 
               i.maint_lab_factor, i.labour_factor_hrs,
@@ -581,6 +581,7 @@ app.get('/overview', async (req, res) => {
 
     if (itemsResult.length === 0) return res.send('No items found for this reference.');
 
+    // Group items by the bill name
     const bills = itemsResult.reduce((acc, item) => {
       const bill = item.bill || 'Unknown Bill';
       if (!acc[bill]) acc[bill] = [];
@@ -588,6 +589,7 @@ app.get('/overview', async (req, res) => {
       return acc;
     }, {});
 
+    // Fixed extra costs
     const extraCosts = {
       Sundries_and_Consumables: 1529.47,
       Project_Management: 1058.82,
@@ -719,7 +721,7 @@ totals.totalCostProject = parseAndRound(
 
     // Calculate GM % for equipment, labour, sundries, and PM and round to two decimals
     totals.gmEquip = ((totals.bill_equipment_selling - totals.bill_equipment_cost) / totals.bill_equipment_selling) * 100;
-    totals.gmLabour = ((totals.bill_labourSell - totals.bill_labourCost) / totals.bill_labourSell) * 100;
+    totals.gmLabour = ((totals.bill_labourSell - totals.bill_labourCost) / totals.bill_labourSell ) * 100;
     totals.gmSundries = ((totals.sundries_selling - totals.sundries_cost) / totals.sundries_selling) * 100;
     totals.gmPm = ((totals.pm_selling - totals.pm_cost) / totals.pm_selling) * 100;
 
@@ -762,6 +764,132 @@ totals.actualGrossMargin = totals.actualGrossMargin.toFixed(2);
 
     // Render the overview page with the grouped items and totals
     res.render('overview', { groupedItems });
+
+  } catch (error) {
+    console.error('Error fetching items:', error);
+    res.send('Error retrieving items data.');
+  }
+});
+
+app.get('/billSummary', async (req, res) => {
+  const userRefNum = req.session.user?.reference;
+  if (!userRefNum) return res.redirect('/');
+
+  try {
+    // Fetch items and relevant details from the database
+    const itemsResult = await executeQuery(
+      `SELECT i.bill, i.stock_code, i.description, i.qty, i.product_type, i.unit_cost, 
+              i.maint_lab_factor, i.labour_factor_hrs,
+              q.customer_name,q.customer_cell, q.customer_email, q.sale_person, q.sale_cell, q.job_description
+       FROM items i
+       JOIN quote_details q ON i.reference = q.reference
+       WHERE i.reference = ?
+       ORDER BY i.bill, i.reference`,
+      [userRefNum]
+    );
+
+    if (itemsResult.length === 0) return res.send('No items found for this reference.');
+
+    // Group items by the bill name
+    const bills = itemsResult.reduce((acc, item) => {
+      const bill = item.bill || 'Unknown Bill';
+      if (!acc[bill]) acc[bill] = [];
+      acc[bill].push(item);
+      return acc;
+    }, {});
+
+    // Fixed extra costs
+    const extraCosts = {
+      Sundries_and_Consumables: 1529.47,
+      Project_Management: 1058.82,
+      Installation_Commissioning_Engineering: 3150.30
+    };
+
+    const equipmentMargin = 0.25;
+    const labour_rate = 320; // Labour rate
+    const pm_rate = 0.15; // Project Management rate
+    const labour_margin = 0.25; // Labour margin
+    const equip_sundries = 0.03; // Sundries cost per hour
+
+    // Grouped items with calculated values
+    const groupedBills = Object.keys(bills).map(billName => {
+      const items = bills[billName].map(item => {
+        // Ensure all numeric values are properly parsed
+        const qty = parseFloat(item.qty) || 0;
+        const unitCost = parseFloat(item.unit_cost) || 0;
+        const labourFactorHrs = parseFloat(item.labour_factor_hrs) || 0;
+        const labourCost = parseFloat(item.labour_cost) || 0;
+        const maintLabFactor = parseFloat(item.maint_lab_factor) || 0;
+
+        // Calculate total price, equipment cost, and equipment selling
+        const totalPrice = unitCost * qty;
+        const equipmentCost = unitCost * qty;
+        const equipmentSelling = (unitCost / (1 - equipmentMargin)) * qty;
+
+        // Calculate total labour cost
+        item.total_labour = parseFloat((item.unitLabRate * qty).toFixed(2));
+
+        return {
+          ...item,
+          total_price: totalPrice.toFixed(2),
+          equipment_cost: equipmentCost.toFixed(2),
+          equipment_selling: equipmentSelling.toFixed(2),
+          total_labour: item.total_labour
+        };
+      });
+
+      // Calculate totals for the bill
+      const bill_equipment_cost = items.reduce((sum, item) => sum + parseFloat(item.equipment_cost || 0), 0);
+      const bill_equipment_selling = items.reduce((sum, item) => sum + parseFloat(item.equipment_selling || 0), 0);
+      let subtotal = items.reduce((sum, item) => sum + (parseFloat(item.unit_cost || 0) * parseFloat(item.qty || 0)), 0);
+
+      // Add extra fixed costs to the subtotal
+      subtotal += extraCosts.Sundries_and_Consumables;
+      subtotal += extraCosts.Project_Management;
+      subtotal += extraCosts.Installation_Commissioning_Engineering;
+
+      // Calculate total selling for the bill
+      const totalSelling = items.reduce((sum, item) => sum + parseFloat(item.total_price || 0), 0);
+      
+      // Calculate VAT (assuming 15% VAT rate)
+      const vatRate = 0.15;
+      const vatAmount = totalSelling * vatRate;
+      
+      // Calculate VAT-included price
+      const vatIncluded = totalSelling + vatAmount;
+
+      return {
+        bill: billName,
+        bill_tot_selling: totalSelling.toFixed(2),
+        vat_amount: vatAmount.toFixed(2),
+        vat_included: vatIncluded.toFixed(2)
+      };
+    });
+
+    // Calculate the sum of all bill_tot_selling values
+    const totalSellingSum = groupedBills.reduce((sum, bill) => sum + parseFloat(bill.bill_tot_selling || 0), 0);
+
+    // VAT and VAT-included for the entire sum
+    const vatAmountForAll = totalSellingSum * 0.15;
+    const totalWithVat = totalSellingSum + vatAmountForAll;
+
+    // Prepare data for the bill summary page
+    const billSummaryData = {
+      reference: userRefNum,
+      customer_name: itemsResult[0]?.customer_name || '',
+      customer_cell: itemsResult[0]?.customer_cell || '',
+      customer_email: itemsResult[0]?.customer_email || '',
+      sale_person: itemsResult[0]?.sale_person || '',
+      sale_cell: itemsResult[0]?.sale_cell || '',
+      job_description: itemsResult[0]?.job_description || '',
+      bills: groupedBills, // Pass the grouped bills with the bill_tot_selling
+      totalSellingSum: totalSellingSum.toFixed(2),
+      vatAmountForAll: vatAmountForAll.toFixed(2),
+      totalWithVat: totalWithVat.toFixed(2)
+    };
+
+    // Render the billSummary page
+    res.render('billSummary', { billSummaryData });
 
   } catch (error) {
     console.error('Error fetching items:', error);
