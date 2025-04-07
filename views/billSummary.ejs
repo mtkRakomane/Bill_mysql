@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bill Summary</title>
-    <link rel="stylesheet" href="/styles.css"> 
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -60,7 +59,7 @@
   <p style="font-size: 13px;"><strong>ATT:</strong>  ...</p>
   <p style="font-size: 13px;"><strong>Email:</strong><%= billSummaryData.customer_email %></p>
   <p style="font-size: 13px;"><strong>Date:</strong> <%= new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
-  <p style="font-size: 13px;"><strong>RE:</strong> ...</p>
+  <p style="font-size: 13px;"><strong>RE:</strong> <%= billSummaryData.job_description %></p>
 </div>
 <br>
 <p style="font-size: 12px;">Dear: <%= billSummaryData.customer_name %> </p>
@@ -84,7 +83,7 @@
         <tr>
           <td><%= index + 1 %></td> 
           <td>Bill <%= index + 1 %>: <%= bill.bill %></td> 
-          <td>R <%= bill.bill_tot_selling %></td>
+          <td>R <%= bill.bill_tot_selling%></td>
         </tr>
       <% }); %>
     </tbody>
@@ -103,7 +102,8 @@
         </tr>
     </tbody>
   </table>
-  <p style="font-size: 12px; text-align: center;">This proposal is valid for days and expires on ....</p>
+  <p style="font-size: bold; color: rgb(148, 10, 10);  text-align: center;">This proposal is valid for days and expires on <span id="expiryDateSummary">Loading...</span>
+</p>
  <p style="font-size: 12px; text-align: center;">Standard Terms and conditions Apply</p>
 
  <table style="width: 20%; margin: 0 auto; border: 1px solid #ccc; border-collapse: collapse; text-align: right; ">
@@ -130,7 +130,6 @@
         </tr>
     </tbody>
 </table>
-
  <div class="signature">
     <p style="font-size: 12px">Yours Faithfully</p>
     <p style="font-size: 12px"><%= billSummaryData.sale_person %></p>
@@ -139,5 +138,20 @@
     <p style="font-size: 12px"><%= billSummaryData.sale_cell %> </p>
     <p style="font-size: 12px">Office: +27 (0) 12 665 8000</p>
 </div>
+<div>
+    <button onclick="window.print()">Print this page</button>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+    let expiryDate = localStorage.getItem("expiryDate");
+    
+    if (expiryDate) {
+        document.getElementById("expiryDateSummary").innerText = expiryDate;
+    } else {
+        document.getElementById("expiryDateSummary").innerText = "No expiry date selected.";
+    }
+});
+
+</script>
 </body>
 </html>
