@@ -5,29 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>All Items</title>
   <style>
-    body { background-color: gray; }
+    body { 
+      background-color: whitesmoke;
+      font-size: 11px; /* 👈 Add this line */
+    }
     table { width: 100%; border-collapse: collapse; }
     th, td { border: 1px solid black; padding: 8px; text-align: left; }
     th { background-color: #f2f2f2; }
     .action-buttons { display: flex; gap: 8px; }
     .action-buttons form { display: inline-block; }
-    .action-buttons button, .delete-all-btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    .action-buttons button, .delete-all-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
     .edit-btn { background-color: #007bff; color: white; }
     .delete-btn { background-color: #dc3545; color: white; }
-    .delete-all-btn { background-color: #ff5733; color: white; padding: 10px 20px; font-size: 16px; margin-top: 15px; }
+    .delete-all-btn {
+      background-color: #ff5733;
+      color: white;
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 15px;
+    }
     .delete-btn:hover, .edit-btn:hover, .delete-all-btn:hover { opacity: 0.8; }
     .center { text-align: center; margin-top: 20px; }
     .bill-header { background-color: #ddd; text-align: center; font-weight: bold; }
     .green-text { color: blue; font-weight: bold; }
+    .green-text-head{color: cornflowerblue}
   </style>
+  
 </head>
 <body>
   <h1>All Items</h1>
   <table>
-    <% for (let bill in groupedItems) { %>
+    <% Object.keys(groupedItems).forEach((bill, index) => { %>
       <thead>
         <tr>
-          <th colspan="20" class="bill-header">Bill: <%= bill %></th>
+          <th colspan="20" class="bill-header">Bill <%= index + 1 %>: <%= bill %></th>
         </tr>
         <tr>
           <th>Item</th>
@@ -38,8 +55,8 @@
           <th>Product Type</th>
           <th>Install Difficulty</th>
           <th>Unit Cost</th>
-          <th class="green-text">Equipment Margin</th>
-          <th class="green-text">Labour Margin</th>
+          <th class="green-text-head">Equipment Margin</th>
+          <th class="green-text-head">Labour Margin</th>
           <th>Labour Unit Rate</th>
           <th>Equipment Unit Rate</th>
           <th>Labour Total</th>
@@ -53,9 +70,9 @@
         </tr>
       </thead>
       <tbody>
-        <% groupedItems[bill].forEach((item, index) => { %>
+        <% groupedItems[bill].forEach((item, idx) => { %>
           <tr>
-            <td><%= index + 1 %></td>
+            <td><%= idx + 1 %></td>
             <td><%= item.bill %></td>
             <td><%= item.stock_code %></td>
             <td><%= item.description %></td>
@@ -65,15 +82,15 @@
             <td><%= item.unit_cost %></td>
             <td class="green-text">25%</td>
             <td class="green-text">25%</td>
-            <td> <%= item.unitLabRate %></td>
-            <td><%=item.equip_unit_rate %></td>
-            <td><%=  item.total_labour %> </td>
-            <td> <%= item.equip_total %> </td>
+            <td><%= item.unitLabRate %></td>
+            <td><%= item.equip_unit_rate %></td>
+            <td><%= item.total_labour %></td>
+            <td><%= item.equip_total %></td>
             <td><%= item.supply %></td>
             <td><%= item.labour_factor_hrs %></td>
             <td><%= item.maint_lab_factor %></td>
             <td><%= item.labour_cost %></td>
-            <td> <%= item.equipmentCost %></td>
+            <td><%= item.equipmentCost %></td>
             <td>
               <div class="action-buttons">
                 <form action="/edit-item/<%= item.id_items %>" method="GET">
@@ -87,9 +104,9 @@
           </tr>
         <% }); %>
       </tbody>
-    <% } %>
+    <% }); %>
   </table>
-
+  
   <div class="center">
     <form action="/delete-all-items/<%= groupedItems.reference %>" method="POST" onsubmit="return confirm('Are you sure you want to delete all items?');">
       <button type="submit" class="delete-all-btn">Delete All Items</button>
