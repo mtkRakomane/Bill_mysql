@@ -45,7 +45,7 @@ app.get('/', async (req, res) => {
     res.status(500).send('Error fetching salePeople');
   }
 });
-// ✅ Signup Page - Fetch Dropdown Data
+// ✅ Signup Page
 app.get('/signup', async (req, res) => {
   try {
     const salePeoples = await executeQuery('SELECT sale_person, sale_cell, sale_email, saleRole FROM salePeople');
@@ -61,7 +61,7 @@ app.get('/signup', async (req, res) => {
     res.status(500).send('Error fetching data for signup');
   }
 });
-// ✅ Signup - Save Data
+
 app.post('/signup', async (req, res) => {
   try {
     const { reference, job_description, customer_name, customer_cell, customer_email, sale_person, sale_cell, sale_email, saleRole } = req.body;
@@ -143,11 +143,33 @@ app.get('/homepage', async (req, res) => {
 app.post('/delete-all-items/:reference', async (req, res) => {
   const { reference } = req.params;
   try {
-    await executeQuery('DELETE FROM items WHERE reference = ?', [reference]);
+    await executeQuery('DELETE FROM Items WHERE reference = ?', [reference]);
     res.redirect('/');
   } catch (error) {
     console.error('Error deleting items:', error);
     res.send('Error deleting items.');
+  }
+});
+// ✅ DELETE(Post)
+app.post('/delete-item/:id', async (req, res) => {
+  const itemId = req.params.id;  
+  const userReference = req.session.user?.reference;  
+  if (!userReference) {
+    return res.status(403).send('Unauthorized access');
+  }
+  const deleteQuery = `
+    DELETE FROM Items 
+    WHERE id_items = ? AND reference = ?`;
+  try {
+  const [deleteResult] = await db.promise().execute(deleteQuery, [itemId, userReference]);
+
+    if (deleteResult.affectedRows === 0) {
+      return res.status(404).send('Item not found or unauthorized');
+    }
+    res.redirect('/allitems');
+  } catch (error) {
+    console.error('Error deleting item:', error);
+    res.status(500).send('Error deleting item');
   }
 });
 // ✅ Add Items
@@ -212,7 +234,7 @@ app.post('/additems', async (req, res) => {
       [reference, bill, stock_code, description, qty, product_type, install_diff, unit_cost, supply, labour_factor_hrs, maint_lab_factor]
     );
 
-    res.redirect('/login');
+    res.redirect('/homepage');
   } catch (error) {
     console.error(error);
     res.send('Database error while processing request');
@@ -385,17 +407,14 @@ app.get('/billing', async (req, res) => {
     }));
 
     res.render('billing', { groupedItems });
-
   } catch (error) {
     console.error('Error fetching items:', error);
     res.send('Error retrieving items data.');
   }
 });
-
 // ✅ Print Page
 app.get('/print', async (req, res) => {
   const userRefNum = req.session.user?.reference;
-
   if (!userRefNum) return res.redirect('/');
 
   try {
@@ -417,12 +436,6 @@ app.get('/print', async (req, res) => {
       return acc;
     }, {});
 
-    const extraCosts = {
-      Sundries_and_Consumables: 1529.47,
-      Project_Management: 1058.82,
-      Installation_Commissioning_Engineering: 3150.30
-    };
-
     let totalExcludingVAT = 0;
 
     const groupedItems = {
@@ -438,19 +451,25 @@ app.get('/print', async (req, res) => {
           total_price: (parseFloat(item.unit_cost || 0) * parseFloat(item.qty || 0)).toFixed(2)
         }));
 
-        let subtotal = items.reduce((sum, item) => {
+        let itemTotalPrice = items.reduce((sum, item) => {
           return sum + (parseFloat(item.unit_cost || 0) * parseFloat(item.qty || 0));
         }, 0);
 
-        // Add extra fixed costs
-        subtotal += extraCosts.Sundries_and_Consumables;
-        subtotal += extraCosts.Project_Management;
-        subtotal += extraCosts.Installation_Commissioning_Engineering;
+        // New calculated extras based on item total
+        const sundries_cal = parseFloat((itemTotalPrice * 0.03).toFixed(2));  // 3%
+        const project_managing = parseFloat((itemTotalPrice * 0.15).toFixed(2));  // 15%
+        const installation_engineering = parseFloat((itemTotalPrice * 0.30).toFixed(2)); // Let's say 30%
 
-        // Add subtotal to total excluding VAT
+        // Subtotal = items + dynamic extras
+        const subtotal = parseFloat((
+          itemTotalPrice +
+          sundries_cal +
+          project_managing +
+          installation_engineering
+        ).toFixed(2));
+
         totalExcludingVAT += subtotal;
 
-        // Calculate total labor hours for this bill
         const totalLabourHours = items.reduce((total, item) => {
           return total + parseFloat(item.labour_factor_hrs || 0);
         }, 0);
@@ -459,16 +478,19 @@ app.get('/print', async (req, res) => {
           bill: billName,
           items,
           subtotal: subtotal.toFixed(2),
-          totalLabourHours: totalLabourHours.toFixed(2)
+          totalLabourHours: totalLabourHours.toFixed(2),
+          extras: {
+            Sundries: sundries_cal.toFixed(2),
+            Project_Management: project_managing.toFixed(2),
+            Installation_Engineering: installation_engineering.toFixed(2)
+          }
         };
       })
     };
 
-    // Calculate VAT and total with VAT
     const vat = totalExcludingVAT * 0.15;
     const totalIncludingVAT = totalExcludingVAT + vat;
 
-    // Add totals to the response
     groupedItems.totalExcludingVAT = totalExcludingVAT.toFixed(2);
     groupedItems.vat = vat.toFixed(2);
     groupedItems.totalIncludingVAT = totalIncludingVAT.toFixed(2);
@@ -542,28 +564,6 @@ app.post('/edit-item/:id', async (req, res) => {
   } catch (error) {
     console.error('Error updating item:', error);
     res.status(500).send('Error updating item');
-  }
-});
-// ✅ DELETE(Post)
-app.post('/delete-item/:id', async (req, res) => {
-  const itemId = req.params.id;  
-  const userReference = req.session.user?.reference;  
-  if (!userReference) {
-    return res.status(403).send('Unauthorized access');
-  }
-  const deleteQuery = `
-    DELETE FROM Items 
-    WHERE id_items = ? AND reference = ?`;
-  try {
-  const [deleteResult] = await db.promise().execute(deleteQuery, [itemId, userReference]);
-
-    if (deleteResult.affectedRows === 0) {
-      return res.status(404).send('Item not found or unauthorized');
-    }
-    res.redirect('/allitems');
-  } catch (error) {
-    console.error('Error deleting item:', error);
-    res.status(500).send('Error deleting item');
   }
 });
 // ✅ Overview
@@ -684,20 +684,16 @@ app.get('/overview', async (req, res) => {
       })
     };
 
-     // Calculate project hours, days, and weeks
      const totalLabourHours = Object.values(groupedItems.bills).reduce((sum, bill) => sum + parseFloat(bill.totalLabourHours || 0), 0);
      const projectDays = totalLabourHours / 8;  
      const projectWeeks = projectDays / 5;  
  
-     // Add to groupedItems for use in the EJS template
      groupedItems.projectHrs = totalLabourHours.toFixed(2);
      groupedItems.projectDays = projectDays.toFixed(2);
      groupedItems.projectWeeks = projectWeeks.toFixed(2);
  
-// Function to safely parse and round numbers to 2 decimal places
 const parseAndRound = (value) => Number(parseFloat(value || 0).toFixed(2));
 
-// Calculate overall totals for the reference
 const totals = {
     bill_equipment_cost: parseAndRound(groupedItems.bills.reduce((sum, bill) => sum + parseFloat(bill.bill_equipment_cost || 0), 0)),
     bill_equipment_selling: parseAndRound(groupedItems.bills.reduce((sum, bill) => sum + parseFloat(bill.bill_equipment_selling || 0), 0)),
@@ -709,7 +705,6 @@ const totals = {
     sundries_selling: parseAndRound(groupedItems.bills.reduce((sum, bill) => sum + parseFloat(bill.sundries_selling || 0), 0))
 };
 
-// Total Sell and Cost Project and round to two decimals
 totals.totalSellProject = parseAndRound(
     totals.bill_equipment_selling + 
     totals.bill_labourSell + 
@@ -724,21 +719,16 @@ totals.totalCostProject = parseAndRound(
     totals.pm_cost
 );
 
-
-    // Calculate GM % for equipment, labour, sundries, and PM and round to two decimals
     totals.gmEquip = ((totals.bill_equipment_selling - totals.bill_equipment_cost) / totals.bill_equipment_selling) * 100;
     totals.gmLabour = ((totals.bill_labourSell - totals.bill_labourCost) / totals.bill_labourSell ) * 100;
     totals.gmSundries = ((totals.sundries_selling - totals.sundries_cost) / totals.sundries_selling) * 100;
     totals.gmPm = ((totals.pm_selling - totals.pm_cost) / totals.pm_selling) * 100;
 
-
-    // Round to two decimals
     totals.gmEquip = totals.gmEquip.toFixed(2);
     totals.gmLabour = totals.gmLabour.toFixed(2);
     totals.gmSundries = totals.gmSundries.toFixed(2);
     totals.gmPm = totals.gmPm.toFixed(2);
 
-    // Project % calculations and round to two decimals
     totals.pEquipment = (totals.bill_equipment_selling / totals.totalSellProject) * 100;
     totals.pLabour = (totals.bill_labourSell / totals.totalSellProject) * 100;
     totals.pSundries = (totals.sundries_selling / totals.totalSellProject) * 100;
@@ -749,14 +739,10 @@ totals.totalCostProject = parseAndRound(
     totals.pSundries = totals.pSundries.toFixed(2);
     totals.pProjectM = totals.pProjectM.toFixed(2);
 
-   
-    
     const vat = 0.14;
     totals.totalTax = totals.totalSellProject * vat;
     totals.totalVatSell = totals.totalSellProject + totals.totalTax;
-    
 
-// Round to two decimals
 totals.totalTax = totals.totalTax.toFixed(2);
 totals.totalVatSell = totals.totalVatSell.toFixed(2);
 
@@ -768,7 +754,6 @@ totals.actualGrossMargin = totals.actualGrossMargin.toFixed(2);
 
     groupedItems.referenceTotals = totals;
 
-    // Render the overview page with the grouped items and totals
     res.render('overview', { groupedItems });
 
   } catch (error) {
@@ -781,7 +766,7 @@ app.get('/billSummary', async (req, res) => {
   if (!userRefNum) return res.redirect('/');
 
   try {
-    // Fetch items and relevant details from the database
+  
     const itemsResult = await executeQuery(
       `SELECT i.bill, i.stock_code, i.description, i.qty, i.product_type, i.unit_cost, 
               i.maint_lab_factor, i.labour_factor_hrs,
@@ -795,7 +780,6 @@ app.get('/billSummary', async (req, res) => {
 
     if (itemsResult.length === 0) return res.send('No items found for this reference.');
 
-    // Group items by the bill name
     const bills = itemsResult.reduce((acc, item) => {
       const bill = item.bill || 'Unknown Bill';
       if (!acc[bill]) acc[bill] = [];
@@ -803,7 +787,6 @@ app.get('/billSummary', async (req, res) => {
       return acc;
     }, {});
 
-    // Fixed extra costs
     const extraCosts = {
       Sundries_and_Consumables: 1529.47,
       Project_Management: 1058.82,
@@ -811,27 +794,23 @@ app.get('/billSummary', async (req, res) => {
     };
 
     const equipmentMargin = 0.25;
-    const labour_rate = 320; // Labour rate
-    const pm_rate = 0.15; // Project Management rate
-    const labour_margin = 0.25; // Labour margin
-    const equip_sundries = 0.03; // Sundries cost per hour
+    const labour_rate = 320; 
+    const pm_rate = 0.15; 
+    const labour_margin = 0.25;
+    const equip_sundries = 0.03; 
 
-    // Grouped items with calculated values
     const groupedBills = Object.keys(bills).map(billName => {
       const items = bills[billName].map(item => {
-        // Ensure all numeric values are properly parsed
         const qty = parseFloat(item.qty) || 0;
         const unitCost = parseFloat(item.unit_cost) || 0;
         const labourFactorHrs = parseFloat(item.labour_factor_hrs) || 0;
         const labourCost = parseFloat(item.labour_cost) || 0;
         const maintLabFactor = parseFloat(item.maint_lab_factor) || 0;
 
-        // Calculate total price, equipment cost, and equipment selling
         const totalPrice = unitCost * qty;
         const equipmentCost = unitCost * qty;
         const equipmentSelling = (unitCost / (1 - equipmentMargin)) * qty;
 
-        // Calculate total labour cost
         item.total_labour = parseFloat((item.unitLabRate * qty).toFixed(2));
 
         return {
@@ -843,24 +822,19 @@ app.get('/billSummary', async (req, res) => {
         };
       });
 
-      // Calculate totals for the bill
       const bill_equipment_cost = items.reduce((sum, item) => sum + parseFloat(item.equipment_cost || 0), 0);
       const bill_equipment_selling = items.reduce((sum, item) => sum + parseFloat(item.equipment_selling || 0), 0);
       let subtotal = items.reduce((sum, item) => sum + (parseFloat(item.unit_cost || 0) * parseFloat(item.qty || 0)), 0);
 
-      // Add extra fixed costs to the subtotal
       subtotal += extraCosts.Sundries_and_Consumables;
       subtotal += extraCosts.Project_Management;
       subtotal += extraCosts.Installation_Commissioning_Engineering;
 
-      // Calculate total selling for the bill
       const totalSelling = items.reduce((sum, item) => sum + parseFloat(item.total_price || 0), 0);
-      
-      // Calculate VAT (assuming 15% VAT rate)
+
       const vatRate = 0.15;
       const vatAmount = totalSelling * vatRate;
-      
-      // Calculate VAT-included price
+
       const vatIncluded = totalSelling + vatAmount;
 
       return {
@@ -878,7 +852,6 @@ app.get('/billSummary', async (req, res) => {
     const vatAmountForAll = totalSellingSum * 0.15;
     const totalWithVat = totalSellingSum + vatAmountForAll;
 
-    // Prepare data for the bill summary page
     const billSummaryData = {
       reference: userRefNum,
       customer_name: itemsResult[0]?.customer_name || '',
@@ -887,13 +860,12 @@ app.get('/billSummary', async (req, res) => {
       sale_person: itemsResult[0]?.sale_person || '',
       sale_cell: itemsResult[0]?.sale_cell || '',
       job_description: itemsResult[0]?.job_description || '',
-      bills: groupedBills, // Pass the grouped bills with the bill_tot_selling
+      bills: groupedBills,
       totalSellingSum: totalSellingSum.toFixed(2),
       vatAmountForAll: vatAmountForAll.toFixed(2),
       totalWithVat: totalWithVat.toFixed(2)
     };
 
-    // Render the billSummary page
     res.render('billSummary', { billSummaryData });
 
   } catch (error) {
