@@ -50,7 +50,6 @@
                         <p>South Africa</p>
                         <p>www.proteacoin.co.za</p>
                     </div>
-                    
                 </div>
             </div>
         </div>
@@ -60,7 +59,7 @@
         <p><strong>ATT:</strong></p>
         <p><strong>Email:</strong> <%= groupedItems.customer_email %></p>
         <p style="font-size: 13px;"><strong>Date:</strong> <%= new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
-        <p><strong>Re: </strong></p>
+        <p><strong>Re: </strong> <%= groupedItems.job_description %></p>
     </div>
     <hr>
     <p style="font-size: 12px;">Dear: <%= groupedItems.customer_name %> </p>
@@ -83,7 +82,6 @@
                         <th>Stock Code</th>
                         <th>Description</th>
                         <th>Quantity</th>
-                        <th>Product Type</th>
                         <th>Unit Cost</th>
                         <th>Total Price</th>
                     </tr>
@@ -95,7 +93,6 @@
                             <td><%= item.stock_code %></td>
                             <td><%= item.description %></td>
                             <td><%= item.qty %></td>
-                            <td><%= item.product_type %></td>
                             <td>R <%= item.unit_cost %></td>
                             <td>R <%= item.total_price %></td>
                         </tr>
@@ -104,15 +101,15 @@
                 <tbody>
                     <tr>
                         <td colspan="6"><strong>Sundries and Consumables:</strong></td>
-                        <td><strong>R 1 529.47</strong></td>
+                        <td><strong>R <%= bill.extras.Sundries %></strong></td>
                     </tr>
                     <tr>
                         <td colspan="6"><strong>Project Management:</strong></td>
-                        <td><strong>R 1 058.82</strong></td>
+                        <td><strong>R <%= bill.extras.Project_Management %></strong></td>
                     </tr>
                     <tr>
                         <td colspan="6"><strong>Installation, Commissioning and Engineering:</strong></td>
-                        <td><strong>R 3 150.30</strong></td>
+                        <td><strong>R <%= bill.extras.Installation_Engineering %></strong></td>
                     </tr>
                     <tr>
                         <td colspan="5" style="background-color: rgb(4, 4, 43);"></td>
@@ -120,12 +117,40 @@
                         <td><strong>R <%= bill.subtotal %></strong></td>
                     </tr>
                 </tbody>
-            </table>
-   
-          
+            </table>  
         </div>
         <hr />
     <% }) %>
+    <table border="1" cellpadding="10" cellspacing="0">
+        <thead>
+          <tr>
+            <th  style="background-color: rgb(4, 4, 43);"> </th>
+          </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                  <div style="text-align: left; display: inline-block; width: 33%;"><strong>CAPEX Option:</strong></div>
+                  <div style="text-align: center; display: inline-block; width: 33%;"><strong>Total Excluding VAT</strong></div>
+                  <div style="text-align: right; display: inline-block; width: 33%;"><strong>R <%= groupedItems.totalExcludingVAT %></strong></div>
+                </td>
+              </tr>
+          <tr>
+            <td>
+                <div style="text-align: center;"><strong>VAT (15%)</strong> </div>
+                <div style="text-align: right;"><strong> R <%= groupedItems.vat %></strong> </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div style="text-align: center;"> <strong>Total Including VAT</strong> </div>  
+               <div style="text-align:right;">  <strong> R <%= groupedItems.totalIncludingVAT %></strong> </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    <p style="font-size: Bold; color: rgb(148, 10, 10); text-align: center;">Proposal Expiry Date: <span id="expiryDateSummary">Loading...</span></p>
+
     <p style="font-size: 12px">Terms and Conditions</p>
     <div class="terms">
         <div class="term" style="font-size: 12px">1. Delivery to be confirmed on placement of order.</div>
@@ -163,21 +188,61 @@
         <div class="term" style="font-size: 12px">21.   ISP Connectivity to be supplied by the client, for the cost of the client</div>
     </div>
     <hr>
+    
     <div class="signature">
-        <p style="font-size: 12px">Yours Faithfully</p>
-        <p style="font-size: 12px"><%= groupedItems.sale_person %></p>
-        <p style="font-size: 12px">Bidvest Protea Coin</p>
-        <p style="font-size: 12px">Head Office, 16 Eddington Crescent, Highveld, Technopark, Centurion, 0157</p>
-        <p style="font-size: 12px"> <%= groupedItems.sale_cell %> </p>
-        <p style="font-size: 12px">Office: +27 (0) 12 665 8000</p>
-    </div>
+        <table style="width: 60%; margin: 0 auto; border: 1px solid #ccc; border-collapse: collapse; text-align: left;">
+          <thead>
+            <tr>
+              <th colspan="2" style="text-align: center;">Customer Acceptance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Print Name</td>
+              <td> __________________________ </td>
+            </tr>
+            <tr>
+              <td>Date</td>
+              <td> __________________________</td>
+            </tr>
+            <tr>
+              <td>Signature</td>
+              <td> __________________________</td>
+            </tr>
+            <tr>
+              <td colspan="2" style="font-size: 12px; text-align: center;">
+                By signing this acceptance, I confirm acceptance of the terms and conditions attached here!
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      
+        <p style="font-size: 12px; text-align: center;">Yours Faithfully</p>
+        <p style="font-size: 12px; text-align: center;"><%= groupedItems.sale_person %></p>
+        <p style="font-size: 12px; text-align: center;">Bidvest Protea Coin</p>
+        <p style="font-size: 12px; text-align: center;">Head Office, 16 Eddington Crescent, Highveld, Technopark, Centurion, 0157</p>
+        <p style="font-size: 12px; text-align: center;"><%= groupedItems.sale_cell %></p>
+        <p style="font-size: 12px; text-align: center;">Office: +27 (0) 12 665 8000</p>
+      </div>
+      
     <div>
         <button onclick="window.print()">Print this page</button>
     </div>
 
     <div class="footer">
-        <p>&copy; Quoting System</p>
+        <p>&copy; <%= new Date().getFullYear() %> Bidvest Protea Coin</p>
     </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+    let expiryDate = localStorage.getItem("expiryDate");
     
+    if (expiryDate) {
+        document.getElementById("expiryDateSummary").innerText = expiryDate;
+    } else {
+        document.getElementById("expiryDateSummary").innerText = "No expiry date selected.";
+    }
+});
+
+    </script>
 </body>
 </html>
