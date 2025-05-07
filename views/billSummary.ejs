@@ -37,6 +37,17 @@
     </style>
 </head>
 <body>
+    <%
+    function formatAccounting(amount) {
+        let num = parseFloat(amount || 0);
+        const isNegative = num < 0;
+        const formatted = Math.abs(num).toLocaleString('en-ZA', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).replace(/,/g, ' ');
+        return isNegative ? `R (${formatted})` : `R ${formatted}`;
+    }
+%>
     <div class="form-container"> 
         <div class="card-right">
             <div class="card-body">
@@ -83,22 +94,22 @@
         <tr>
           <td><%= index + 1 %></td> 
           <td>Bill <%= index + 1 %>: <%= bill.bill %></td> 
-          <td>R <%= bill.bill_tot_selling%></td>
+          <td> <%= formatAccounting(bill.bill_tot_selling) %></td>
         </tr>
       <% }); %>
     </tbody>
     <tbody>
         <tr>
             <td colspan="2"> <strong>Total (Excluding VAT)</strong></td>
-            <td>R <%= billSummaryData.totalSellingSum %> </td>
+            <td> <%= formatAccounting(billSummaryData.totalSellingSum) %> </td>
         </tr>
         <tr>
             <td colspan="2"> <strong>VAT (15%)</strong></td>
-            <td>R <%= billSummaryData.vatAmountForAll %></td>
+            <td> <%= formatAccounting(billSummaryData.vatAmountForAll) %></td>
         </tr>
         <tr>
             <td colspan="2"><strong>Total (Including VAT)</strong></td>
-            <td>R <%= billSummaryData.totalWithVat %></td>
+            <td> <%= formatAccounting(billSummaryData.totalWithVat) %></td>
         </tr>
     </tbody>
   </table>
@@ -141,6 +152,10 @@
 <div>
     <button onclick="window.print()">Print this page</button>
 </div>
+
+    <div class="footer">
+        <p>&copy; <%= new Date().getFullYear() %> Bidvest Protea Coin</p>
+    </div>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
     let expiryDate = localStorage.getItem("expiryDate");
