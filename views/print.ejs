@@ -37,6 +37,18 @@
     </style>
 </head>
 <body>
+    <%
+    function formatAccounting(amount) {
+        let num = parseFloat(amount || 0);
+        const isNegative = num < 0;
+        const formatted = Math.abs(num).toLocaleString('en-ZA', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).replace(/,/g, ' ');
+        return isNegative ? `R (${formatted})` : `R ${formatted}`;
+    }
+%>
+
     <div class="form-container"> 
         <div class="card-right">
             <div class="card-body">
@@ -71,7 +83,7 @@
     </span>
     <% groupedItems.bills.forEach(bill => { %>
         <div>
-            
+         
             <table>
                 <thead>
                     <tr>
@@ -93,28 +105,29 @@
                             <td><%= item.stock_code %></td>
                             <td><%= item.description %></td>
                             <td><%= item.qty %></td>
-                            <td>R <%= item.unit_cost %></td>
-                            <td>R <%= item.total_price %></td>
+                            <td> <%= formatAccounting(item.equip_total ) %></td>
+                            <td> <%= formatAccounting(item.total_price) %></td>
                         </tr>
                     <% }) %>
                 </tbody>
                 <tbody>
+                  
                     <tr>
-                        <td colspan="6"><strong>Sundries and Consumables:</strong></td>
-                        <td><strong>R <%= bill.extras.Sundries %></strong></td>
+                        <td colspan="5"><strong>Sundries and Consumables:</strong></td>
+                        <td><strong> <%= formatAccounting(bill.extras.Sundries ) %></strong></td>
                     </tr>
                     <tr>
-                        <td colspan="6"><strong>Project Management:</strong></td>
-                        <td><strong>R <%= bill.extras.Project_Management %></strong></td>
+                        <td colspan="5"><strong>Project Management:</strong></td>
+                        <td><strong> <%= formatAccounting( bill.extras.Project_Management) %></strong></td>
                     </tr>
                     <tr>
-                        <td colspan="6"><strong>Installation, Commissioning and Engineering:</strong></td>
-                        <td><strong>R <%= bill.extras.Installation_Engineering %></strong></td>
+                        <td colspan="5"><strong>Installation, Commissioning and Engineering:</strong></td>
+                        <td><strong> <%= formatAccounting(bill.extras.Installation_Engineering) %></strong></td>
                     </tr>
                     <tr>
-                        <td colspan="5" style="background-color: rgb(4, 4, 43);"></td>
+                        <td colspan="4" style="background-color: rgb(4, 4, 43);"></td>
                         <td><strong>Subtotal:</strong></td>
-                        <td><strong>R <%= bill.subtotal %></strong></td>
+                        <td><strong> <%= formatAccounting(bill.subtotal) %></strong></td>
                     </tr>
                 </tbody>
             </table>  
@@ -132,19 +145,19 @@
                 <td>
                   <div style="text-align: left; display: inline-block; width: 33%;"><strong>CAPEX Option:</strong></div>
                   <div style="text-align: center; display: inline-block; width: 33%;"><strong>Total Excluding VAT</strong></div>
-                  <div style="text-align: right; display: inline-block; width: 33%;"><strong>R <%= groupedItems.totalExcludingVAT %></strong></div>
+                  <div style="text-align: right; display: inline-block; width: 33%;"><strong> <%= formatAccounting(groupedItems.totalExcludingVAT)  %></strong></div>
                 </td>
               </tr>
           <tr>
             <td>
                 <div style="text-align: center;"><strong>VAT (15%)</strong> </div>
-                <div style="text-align: right;"><strong> R <%= groupedItems.vat %></strong> </div>
+                <div style="text-align: right;"><strong> <%= formatAccounting(groupedItems.vat)  %></strong> </div>
             </td>
           </tr>
           <tr>
             <td>
               <div style="text-align: center;"> <strong>Total Including VAT</strong> </div>  
-               <div style="text-align:right;">  <strong> R <%= groupedItems.totalIncludingVAT %></strong> </div>
+               <div style="text-align:right;">  <strong> <%= formatAccounting(groupedItems.totalIncludingVAT)  %></strong> </div>
             </td>
           </tr>
         </tbody>
