@@ -31,6 +31,17 @@
         </style>
 </head>
 <body>
+    <%
+    function formatAccounting(amount) {
+        let num = parseFloat(amount || 0);
+        const isNegative = num < 0;
+        const formatted = Math.abs(num).toLocaleString('en-ZA', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).replace(/,/g, ' ');
+        return isNegative ? `R (${formatted})` : `R ${formatted}`;
+    }
+%>
     <div class="container-fluid pt-5 mt-3">
         <div class="row">
             <div class="col-md-5">
@@ -74,19 +85,19 @@
                            <tbody>
                             <tr>
                                 <td>Total Selling Price</td>
-                                <td><strong>R <%= groupedItems.referenceTotals.totalSellProject %> <span id="total_sell_project"></strong></td>
+                                <td><strong> <%= formatAccounting(groupedItems.referenceTotals.totalSellProject) %> <span id="total_sell_project"></strong></td>
                             </tr>
                             <tr>
                                 <td>Total Selling Price inc. VAT</td>
-                                <td><strong>R <%= groupedItems.referenceTotals.totalVatSell %> <span id="total_sell_with_vat"></strong></td>
+                                <td><strong> <%= formatAccounting(groupedItems.referenceTotals.totalVatSell )%> <span id="total_sell_with_vat"></strong></td>
                             </tr>
                             <tr>
                                 <td>Total Cost</td>
-                                <td><strong>R <%= groupedItems.referenceTotals.totalCostProject %><span id="total_cost_project"></span></strong></td>
+                                <td><strong> <%= formatAccounting(groupedItems.referenceTotals.totalCostProject) %><span id="total_cost_project"></span></strong></td>
                             </tr>
                             <tr>
                                 <td>Total Gross Profit</td>
-                                <td><strong> R <%= groupedItems.referenceTotals.totalGrossMargin %> <span id="total_gross_profit"></span></strong></td>
+                                <td><strong> <%= formatAccounting(groupedItems.referenceTotals.totalGrossMargin) %> <span id="total_gross_profit"></span></strong></td>
                             </tr>
                             <tr> 
                                 <td>Actual Gross Margin </td>
@@ -123,7 +134,7 @@
                                     <th>Cost</th>
                                     <th></th>
                                     <th>Sell</th>
-                                    <th></th>
+                                    <th></t h>
                                     <th>GM %</th>
                                     <th></th>
                                     <th>% of Project</th>
@@ -132,21 +143,21 @@
                             <tbody>
                                 <tr>
                                     <td>Equipment Cost</td>
-                                    <td>R <%= groupedItems.referenceTotals.bill_equipment_cost %></td>
+                                    <td> <%= formatAccounting(groupedItems.referenceTotals.bill_equipment_cost) %></td>
                                     <td></td>
-                                    <td>R <%= groupedItems.referenceTotals.bill_equipment_selling %></td>
+                                    <td> <%= formatAccounting(groupedItems.referenceTotals.bill_equipment_selling) %></td>
                                      <td></td>
                                     <td><%= groupedItems.referenceTotals.gmEquip %> %</td> 
                                     <td></td> 
-                                    <td><%= groupedItems.referenceTotals.pEquipment %> %</td>
+                                    <td><%= groupedItems.referenceTotals.pEquipment%> %</td>
                                 </tr>
                                 <tr>
                                     <td>Equipment Installation Cost</td>
-                                    <td>R <%= groupedItems.referenceTotals.bill_labourCost %></td>
+                                    <td> <%= formatAccounting(groupedItems.referenceTotals.bill_labourCost) %></td>
                                     <td></td>
-                                    <td>R <%= groupedItems.referenceTotals.bill_labourCost %></td>
+                                    <td> <%= formatAccounting(groupedItems.referenceTotals.bill_labourSell) %></td>
                                     <td></td>
-                                    <td><%= groupedItems.referenceTotals.gmLabour %> %</td>
+                                    <td><%= groupedItems.referenceTotals.gmLabour%> %</td>
                                     <td></td>
                                     <td><%= groupedItems.referenceTotals.pLabour %> %</td>
                                 </tr>
@@ -162,9 +173,9 @@
                                 </tr>
                                 <tr>
                                     <td>Sundries and Consumables</td>
-                                    <td> R <%= groupedItems.referenceTotals.sundries_cost %></td>
+                                    <td> <%= formatAccounting(groupedItems.referenceTotals.sundries_cost) %></td>
                                     <td></td>
-                                    <td>R <%= groupedItems.referenceTotals.sundries_selling %></td>
+                                    <td><%= formatAccounting(groupedItems.referenceTotals.sundries_selling) %></td>
                                     <td></td>
                                     <td><%= groupedItems.referenceTotals.gmSundries %> %</td> 
                                     <td></td>
@@ -172,9 +183,9 @@
                                 </tr>
                                 <tr>
                                     <td>Project Management</td>
-                                    <td>R <%= groupedItems.referenceTotals.pm_cost %></td>
+                                    <td><%= formatAccounting(groupedItems.referenceTotals.pm_cost) %></td>
                                     <td></td>
-                                    <td>R <%= groupedItems.referenceTotals.pm_selling %></td>
+                                    <td><%= formatAccounting(groupedItems.referenceTotals.pm_selling) %></td>
                                     <td></td>
                                     <td><%= groupedItems.referenceTotals.gmPm %> %</td>
                                     <td></td>
@@ -182,9 +193,9 @@
                                 </tr>
                                 <tr>
                                     <td>Total</td>
-                                    <td>R <%= groupedItems.referenceTotals.totalCostProject %></td>
+                                    <td> <%= formatAccounting(groupedItems.referenceTotals.totalCostProject) %></td>
                                     <td></td>
-                                    <td>R <%= groupedItems.referenceTotals.totalSellProject %> </td>
+                                    <td> <%= formatAccounting(groupedItems.referenceTotals.totalSellProject) %> </td>
                                     <td></td>
                                     <td></td>
                                     <td></td>
