@@ -28,6 +28,10 @@
           <input type="text" name="qty" placeholder="Quantity:" required autocomplete="off"><br>
         </div>
         <div class="form-group">
+          <label for="unit_cost">Unit Cost:</label>
+          <input type="text" name="unit_cost" placeholder="Unit Cost:" required autocomplete="off" step="0.01"><br>
+        </div>
+        <div class="form-group">
           <label for="product_type">Select Product Type:</label>
           <select id="product_type" name="product_type" required>
               <option value="" disabled selected>Select a Product</option>
@@ -48,10 +52,7 @@
             <% }); %>
           </select>
         </div>
-        <div class="form-group">
-          <label for="unit_cost">Unit Cost:</label>
-          <input type="text" name="unit_cost" placeholder="Unit Cost:" required autocomplete="off" step="0.01"><br>
-        </div>
+        <input type="hidden" id="install_diff_factor" name="install_diff_factor">
         <div class="form-group">
           <label for="supply">Supplier:</label>
           <select id="supply" name="supply" required>
@@ -72,34 +73,44 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script>
     $(document).ready(function () {
+      const installDifficultyTypes = <%- JSON.stringify(installDifficultyTypes) %>;
+  
       $("#product_type").change(function () {
         var selectedProduct = $(this).val();
-
         var selectedProductData = <%- JSON.stringify(productTypes) %>.find(function (product) {
           return product.product_type === selectedProduct;
         });
-
+  
         if (selectedProductData) {
-         
           $("#labour_factor_hrs").val(selectedProductData.labour_factor_hrs);
           $("#maint_lab_factor").val(selectedProductData.maint_lab_factor);
+        }
+      });
+  
+      $('#install_diff').change(function () {
+        const selectedDiff = $(this).val();
+  
+        const selectedDiffData = installDifficultyTypes.find(function (item) {
+          return item.install_diff === selectedDiff;
+        });
+  
+        if (selectedDiffData) {
+          $('#install_diff_factor').val(selectedDiffData.install_diff_factor);
         }
       });
 
       $('#add-item-form').on('submit', function (e) {
         e.preventDefault();
-
+  
         const formData = $(this).serialize();
-
+  
         $.ajax({
           url: '/additems',
           type: 'POST',
           data: formData,
           success: function (response) {
             alert('Item added successfully');
-            
             window.location.href = '/login?reference=' + response.reference + '&additionalField=' + response.additionalField;
-
           },
           error: function (error) {
             alert('Error: ' + error.statusText);
@@ -108,6 +119,7 @@
       });
     });
   </script>
+  
   
 </body>
 </html>
