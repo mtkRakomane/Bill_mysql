@@ -71,7 +71,6 @@
   </style>
 </head>
 <body>
-  
   <div class="container">
     <h1>Quote Register!</h1> 
     <form class="signup_form" action="/signup" method="POST">
@@ -136,10 +135,8 @@
     const saleCellInput = document.getElementById('sale_cell');
     const saleEmailInput = document.getElementById('sale_email');
     const saleRoleInput = document.getElementById('saleRole');
-  
     salePersonSelect.addEventListener('change', function () {
       const selectedOption = salePersonSelect.options[salePersonSelect.selectedIndex];
-      
       saleCellInput.value = selectedOption.getAttribute('data-cell');
       saleEmailInput.value = selectedOption.getAttribute('data-email');
       saleRoleInput.value = selectedOption.getAttribute('data-role');
