@@ -4,62 +4,114 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Signup</title>
-  <link rel="stylesheet" href="/styles/styles.css"> 
+  <link rel="stylesheet" href="/styles/styles.css">
+  <style>
+.signup_form {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+  background-color: #f9f9f9;
+}
+.form-group input[readonly] {
+  background-color: #eee;
+  cursor: not-allowed;
+}
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #007bff;
+  outline: none;
+}
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #007bff;
+  color: #fff;
+  font-weight: bold;
+  font-size: 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+  background-color: #0056b3;
+}
+ footer {
+      background-color: #343a40;
+      color: #ffffff;
+      text-align: center;
+      padding: 12px 0;
+      margin-top: auto;
+    }
+  </style>
 </head>
 <body>
+  
   <div class="container">
-    <h1>Quote Register!</h1>
-    
-    <form action="/signup" method="POST">
-      <div class= "form-group">
-      <label for="reference">Reference:</label>
+    <h1>Quote Register!</h1> 
+    <form class="signup_form" action="/signup" method="POST">
+    <div class= "form-group">
+      <label for="reference">Reference: </label>
       <input type="text" name="reference" placeholder="Reference:" required autocomplete="off"><br>
     </div>
     <div class= "form-group">
       <label for="job_description">Job Description:</label>
       <input type="text" name="job_description" placeholder="Job Description:" required autocomplete="off"><br>
-    </div>
-    
-      <div class="form-group">
-        <label for="sale_person">Sale Person:</label>
-        <select id="sale_person" name="sale_person" required>
-            <option value="" disabled selected>Select a Sale Person</option>
-            <% salePeoples.forEach(type => { %>
-                <option value="<%= type.sale_person %>"><%= type.sale_person %></option>
-            <% }); %>
-        </select>
-    </div>
-     
+    </div>   
     <div class="form-group">
-      <label for="sale_cell">Sale Contact:</label>
-      <select id="sale_cell" name="sale_cell" required>
-          <option value="" disabled selected>Select a Sale Contract</option>
-          <% salePeoples.forEach(type => { %>
-              <option value="<%= type.sale_cell %>"><%= type.sale_cell %></option>
-          <% }); %>
-      </select>
-  </div>
-     
-  <div class="form-group">
-    <label for="sale_email">Sale Email:</label>
-    <select id="sale_email" name="sale_email" required>
-        <option value="" disabled selected>Select a Sale Email</option>
+      <label for="sale_person">Sales Person:</label>
+      <select id="sale_person" name="sale_person" required>
+        <option value="" disabled selected>Select a Sale Person</option>
         <% salePeoples.forEach(type => { %>
-            <option value="<%= type.sale_email %>"><%= type.sale_email %></option>
+          <option 
+            value="<%= type.sale_person %>" 
+            data-cell="<%= type.sale_cell %>" 
+            data-email="<%= type.sale_email %>" 
+            data-role="<%= type.saleRole %>"
+          >
+            <%= type.sale_person %>
+          </option>
         <% }); %>
-    </select>
-</div>
-
-<div class="form-group">
-  <label for="saleRole">Sale saleRole:</label>
-  <select id="saleRole" name="saleRole" required>
-      <option value="" disabled selected>Select a Sale Role</option>
-      <% salePeoples.forEach(type => { %>
-          <option value="<%= type.saleRole %>"><%= type.saleRole %></option>
-      <% }); %>
-  </select>
-</div>
-<div class= "form-group">
+      </select>
+    </div>   
+    <div class="form-group">
+      <label for="sale_cell">Sales Contact:</label>
+      <input type="text" id="sale_cell" name="sale_cell" readonly required />
+    </div>   
+    <div class="form-group">
+      <label for="sale_email">Sales Email:</label>
+      <input type="email" id="sale_email" name="sale_email" readonly required />
+    </div>   
+    <div class="form-group">
+      <label for="saleRole">Sales Role:</label>
+      <input type="text" id="saleRole" name="saleRole" readonly required />
+    </div> 
+    <div class= "form-group">
       <label for="customer_name">Customer Name:</label>
       <input type="text" name="customer_name" placeholder="Customer Name:" required autocomplete="off"><br>
     </div>
@@ -71,34 +123,27 @@
       <label for="customer_email">Customer Email:</label>
       <input type="email" name="customer_email" placeholder="Customer Email:" required autocomplete="off"><br>
     </div>
-  
     <button type="submit" class="submit-btn">Register</button>
+    <br>
+       <p>Already Registered? <a href="/">Login here</a></p> 
     </form>
-
-    <p>Already Registered? <a href="/">Login here</a></p> 
   </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $(document).ready(function() {
-          $('#signup-form').on('submit', function(e) {
-            e.preventDefault();  
+ <footer>
+    <p>&copy; <%= new Date().getFullYear() %> Bidvest Protea Coin</p>
+  </footer>
+  <script>
+    const salePersonSelect = document.getElementById('sale_person');
+    const saleCellInput = document.getElementById('sale_cell');
+    const saleEmailInput = document.getElementById('sale_email');
+    const saleRoleInput = document.getElementById('saleRole');
+  
+    salePersonSelect.addEventListener('change', function () {
+      const selectedOption = salePersonSelect.options[salePersonSelect.selectedIndex];
       
-            const formData = $(this).serialize();  
-      
-            $.ajax({
-              url: '/signup',  
-              type: 'POST',
-              data: formData,
-              success: function(response) {
-                window.location.href = '/';
-              },
-              error: function(error) {
-                alert('Error: ' + error.statusText);
-              }
-            });
-          });
-        });
-      </script>
+      saleCellInput.value = selectedOption.getAttribute('data-cell');
+      saleEmailInput.value = selectedOption.getAttribute('data-email');
+      saleRoleInput.value = selectedOption.getAttribute('data-role');
+    });
+  </script>
 </body>
 </html>
