@@ -123,17 +123,12 @@ app.get('/homepage', async (req, res) => {
     if (!reference) {
       return res.send('Error: No reference provided.');
     }
-
     const dataResult = await executeQuery('SELECT * FROM Quote_details WHERE reference = ?', [reference]);
-    
     if (dataResult.length === 0) {
       return res.send('Error: No data found for the provided reference.');
     }
-
     const data = dataResult[0]; 
-
     res.render('homepage', { data });
-
   } catch (error) {
     console.error('Error fetching quote details:', error);
     res.status(500).send('Internal server error');
@@ -142,69 +137,85 @@ app.get('/homepage', async (req, res) => {
 // ✅ Add Items
 app.get('/additems', async (req, res) => {
   try {
-    const salePeoples = await executeQuery('SELECT sale_person, sale_cell, sale_email, saleRole FROM salePeople');
-    const installDifficultyTypes = await executeQuery('SELECT install_diff, install_diff_factor FROM InstallDifficultyType');
-    const slaMlaTypes = await executeQuery('SELECT sla_mla FROM SlaMlaType');
-    const validateNumTypes = await executeQuery('SELECT validate_num_days FROM ValidateNumType');
-    const productTypes = await executeQuery('SELECT product_type, labour_factor_hrs, maint_lab_factor FROM ProductType');
-    const supplyTypes = await executeQuery('SELECT supply FROM SupplyType');
-
     const reference = req.query.reference;
-    if (!reference) {
-      return res.send('Error: No reference provided.');
-    }
-
-    res.render('additems', { 
-      reference, 
-      salePeoples, 
-      installDifficultyTypes, 
-      slaMlaTypes, 
-      validateNumTypes, 
-      productTypes, 
-      supplyTypes 
+    if (!reference) return res.status(400).send('Error: No reference provided.');
+    const [
+      salePeoples,
+      installDifficultyTypes,
+      slaMlaTypes,
+      validateNumTypes,
+      productTypes,
+      supplyTypes
+    ] = await Promise.all([
+      executeQuery('SELECT sale_person, sale_cell, sale_email, saleRole FROM salePeople'),
+      executeQuery('SELECT install_diff, install_diff_factor FROM InstallDifficultyType'),
+      executeQuery('SELECT sla_mla FROM SlaMlaType'),
+      executeQuery('SELECT validate_num_days FROM ValidateNumType'),
+      executeQuery('SELECT product_type, labour_factor_hrs, maint_lab_factor FROM ProductType'),
+      executeQuery('SELECT supply FROM SupplyType')
+    ]);
+    res.render('additems', {
+      reference,
+      salePeoples,
+      installDifficultyTypes,
+      slaMlaTypes,
+      validateNumTypes,
+      productTypes,
+      supplyTypes
     });
   } catch (error) {
     console.error('Database error:', error);
-    res.status(500).send('Database error');
+    res.status(500).send('Server error while loading additems form.');
   }
 });
+// POST /additems
 app.post('/additems', async (req, res) => {
   try {
-    const { 
-      reference, bill, stock_code, description, qty, 
-      product_type, install_diff, install_diff_factor, unit_cost, supply, 
-      labour_hrs, labour_cost, labour_factor_hrs, maint_lab_factor
+    const {
+      reference, bill, stock_code, description, qty,
+      product_type, install_diff, install_diff_factor,
+      unit_cost, supply, labour_hrs, labour_cost,
+      labour_factor_hrs, maint_lab_factor
     } = req.body;
-
-    if (!reference) {
-      return res.send('Error: Reference is missing.');
+    if (!reference) return res.status(400).send('Error: Reference is missing.');
+    if (!bill) return res.status(400).send('Error: Bill is missing.');
+    const referenceExists = await executeQuery(
+      'SELECT 1 FROM Quote_details WHERE reference = ?',
+      [reference]
+    );
+    if (referenceExists.length === 0) {
+      return res.status(404).send('Error: Reference does not exist in Quote_details.');
     }
-
-    // Check if the reference exists in Quote_details
-    const referenceResult = await executeQuery(`SELECT * FROM Quote_details WHERE reference = ?`, [reference]);
-    if (referenceResult.length === 0) {
-      return res.send('Error: Reference does not exist in Quote_details');
-    }
-
-    const billResult = await executeQuery(`SELECT * FROM Bills WHERE bill = ? AND reference = ?`, [bill, reference]);
-    if (billResult.length === 0) {
+    const billExists = await executeQuery(
+      'SELECT 1 FROM Bills WHERE bill = ? AND reference = ?',
+      [bill, reference]
+    );
+    if (billExists.length === 0) {
       await executeQuery(
-        `INSERT INTO Bills (bill, reference, labour_hrs, labour_cost) VALUES (?, ?, ?, ?)`,
+        `INSERT INTO Bills (bill, reference, labour_hrs, labour_cost)
+         VALUES (?, ?, ?, ?)`,
         [bill, reference, labour_hrs || 0, labour_cost || 0]
       );
-      console.log('Bill inserted successfully');
+      console.log(`Bill '${bill}' inserted for reference '${reference}'`);
     }
 
     await executeQuery(
-      `INSERT INTO Items (reference, bill, stock_code, description, qty, product_type, install_diff, install_diff_factor, unit_cost, supply, labour_factor_hrs, maint_lab_factor)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [reference, bill, stock_code, description, qty, product_type, install_diff, install_diff_factor, unit_cost, supply, labour_factor_hrs, maint_lab_factor]
+      `INSERT INTO Items (
+        reference, bill, stock_code, description, qty, product_type,
+        install_diff, install_diff_factor, unit_cost, supply,
+        labour_factor_hrs, maint_lab_factor
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        reference, bill, stock_code || '', description || '', qty || 0,
+        product_type || '', install_diff || '', install_diff_factor || 0,
+        unit_cost || 0, supply || '', labour_factor_hrs || 0, maint_lab_factor || 0
+      ]
     );
 
     res.redirect('/homepage');
   } catch (error) {
-    console.error(error);
-    res.send('Database error while processing request');
+    console.error('Error inserting item:', error);
+    res.status(500).send('Database error while processing request.');
   }
 });
 // ✅ All items
@@ -485,6 +496,7 @@ app.get('/billing', async (req, res) => {
 app.get('/billSummary', async (req, res) => {
   const userRefNum = req.session.user?.reference;
   if (!userRefNum) return res.redirect('/');
+
   try {
     const itemsResult = await executeQuery(
       `SELECT i.bill, i.stock_code, i.description, i.qty, i.product_type, i.unit_cost, 
@@ -496,49 +508,71 @@ app.get('/billSummary', async (req, res) => {
        ORDER BY i.bill, i.reference`,
       [userRefNum]
     );
+
     if (itemsResult.length === 0) return res.send('No items found for this reference.');
+
+    // Group items by bill
     const bills = itemsResult.reduce((acc, item) => {
       const bill = item.bill || 'Unknown Bill';
       if (!acc[bill]) acc[bill] = [];
       acc[bill].push(item);
       return acc;
     }, {});
+
+    // Extra fixed cost values
     const extraCosts = {
       Sundries_and_Consumables: 1529.47,
       Project_Management: 1058.82,
       Installation_Commissioning_Engineering: 3150.30
     };
+
+    // Financial constants
     const equipmentMargin = 0.25;
-    const labour_rate = 400; 
-    const pm_rate = 0.15; 
+    const labour_rate = 400;
+    const pm_rate = 0.15;
     const labour_margin = 0.25;
-    const equip_sundries = 0.03; 
+    const equip_sundries = 0.03;
+
+    // Get pre-calculated bills from /billing session
+    const savedBills = req.session.calculatedBills || [];
+
+    // Map stored values back to each bill for display
     const groupedBills = Object.keys(bills).map(billName => {
+      const sessionBill = savedBills.find(b => b.bill === billName);
       const items = bills[billName].map(item => {
         const qty = parseFloat(item.qty) || 0;
         const unitCost = parseFloat(item.unit_cost) || 0;
         const labourFactorHrs = parseFloat(item.labour_factor_hrs) || 0;
-        const labourCost = parseFloat(item.labour_cost) || 0;
         const maintLabFactor = parseFloat(item.maint_lab_factor) || 0;
+
         const totalPrice = unitCost * qty;
         const equipmentCost = unitCost * qty;
         const equipmentSelling = (unitCost / (1 - equipmentMargin)) * qty;
-        item.total_labour = parseFloat((item.unitLabRate * qty).toFixed(2));
+
+        // Estimate total labour
+        const total_labour = parseFloat((labourFactorHrs * labour_rate * qty).toFixed(2));
+
         return {
           ...item,
           total_price: totalPrice.toFixed(2),
           equipment_cost: equipmentCost.toFixed(2),
           equipment_selling: equipmentSelling.toFixed(2),
-          total_labour: item.total_labour
+          total_labour: total_labour
         };
       });
+
       const bill_equipment_cost = items.reduce((sum, item) => sum + parseFloat(item.equipment_cost || 0), 0);
       const bill_equipment_selling = items.reduce((sum, item) => sum + parseFloat(item.equipment_selling || 0), 0);
+
       let subtotal = items.reduce((sum, item) => sum + (parseFloat(item.unit_cost || 0) * parseFloat(item.qty || 0)), 0);
       subtotal += extraCosts.Sundries_and_Consumables;
       subtotal += extraCosts.Project_Management;
       subtotal += extraCosts.Installation_Commissioning_Engineering;
-      const totalSelling = items.reduce((sum, item) => sum + parseFloat(item.total_price || 0), 0);
+
+      const totalSelling = sessionBill?.bill_tot_selling
+        ? parseFloat(sessionBill.bill_tot_selling)
+        : items.reduce((sum, item) => sum + parseFloat(item.total_price || 0), 0);
+
       const vatRate = 0.15;
       const vatAmount = totalSelling * vatRate;
       const vatIncluded = totalSelling + vatAmount;
@@ -547,15 +581,18 @@ app.get('/billSummary', async (req, res) => {
         bill: billName,
         bill_tot_selling: totalSelling.toFixed(2),
         vat_amount: vatAmount.toFixed(2),
-        vat_included: vatIncluded.toFixed(2)
+        vat_included: vatIncluded.toFixed(2),
+        subtotal: subtotal.toFixed(2),
+        bill_equipment_cost: bill_equipment_cost.toFixed(2),
+        bill_equipment_selling: bill_equipment_selling.toFixed(2)
       };
     });
 
-   const customerData = itemsResult[0];
-    const savedBills = req.session.calculatedBills || [];
+    // Grand total calculation from session
     const totalSellingSum = savedBills.reduce((sum, b) => sum + parseFloat(b.bill_tot_selling || 0), 0);
     const vatAmountForAll = totalSellingSum * 0.15;
     const totalWithVat = totalSellingSum + vatAmountForAll;
+
     const billSummaryData = {
       reference: userRefNum,
       customer_name: itemsResult[0]?.customer_name || '',
@@ -577,6 +614,7 @@ app.get('/billSummary', async (req, res) => {
     res.send('Error retrieving items data.');
   }
 });
+
 // ✅ Overview
 app.get('/overview', async (req, res) => {
   const userRefNum = req.session.user?.reference;
@@ -788,6 +826,7 @@ totals.actualGrossMargin = totals.actualGrossMargin.toFixed(2);
 app.get('/print', async (req, res) => {
   const userRefNum = req.session.user?.reference;
   if (!userRefNum) return res.redirect('/');
+
   try {
     const itemsResult = await executeQuery(`
       SELECT i.bill, i.stock_code, i.description, i.qty, i.product_type, i.unit_cost, i.maint_lab_factor, i.labour_factor_hrs,
@@ -797,19 +836,24 @@ app.get('/print', async (req, res) => {
       WHERE i.reference = ? 
       ORDER BY i.bill, i.reference
     `, [userRefNum]);
+
     if (itemsResult.length === 0) return res.send('No items found for this reference.');
+
     const equip_margin = 0.25;
     const labour_margin = 0.25;
     const labour_rate = 400;       
     const pm_rate = 0.15;           
     const equip_sundries = 0.03;    
+
     let totalExcludingVAT = 0;
+
     const bills = itemsResult.reduce((acc, item) => {
       const bill = item.bill || 'Unknown Bill';
       if (!acc[bill]) acc[bill] = [];
       acc[bill].push(item);
       return acc;
     }, {});
+
     const groupedItems = {
       reference: userRefNum,
       customer_name: itemsResult[0]?.customer_name || '',
@@ -821,9 +865,11 @@ app.get('/print', async (req, res) => {
         const items = bills[billName].map(item => {
           const equip_unit_rate = parseFloat((item.unit_cost / (1 - equip_margin)).toFixed(2));
           const equip_total = parseFloat((equip_unit_rate * item.qty).toFixed(2));
+
           const sellRate = labour_rate / (1 - labour_margin); 
           const unitLabRate = parseFloat(sellRate || 0) * parseFloat(item.labour_factor_hrs || 0);
           const total_labour = unitLabRate * item.qty;
+
           return {
             ...item,
             equip_unit_rate,
@@ -833,26 +879,35 @@ app.get('/print', async (req, res) => {
             total_labour: total_labour.toFixed(2),
           };
         });
+
         const installation_engineering = items.reduce((sum, item) => {
           const totalLabourForItem = parseFloat(item.total_labour || 0);
           return sum + totalLabourForItem;
         }, 0);
+
         const totalLabourHours = items.reduce((sum, item) => sum + (parseFloat(item.labour_factor_hrs || 0) * parseFloat(item.qty || 0)), 0);
+       
         const totalLabourFactorHrs = items.reduce((sum, item) => {
           return sum + parseFloat(item.labour_factor_hrs || 0);
         }, 0);
+
         const sundries_cal = parseFloat((totalLabourHours * equip_sundries / (1 - labour_margin)).toFixed(2));
+
         const pmRates = totalLabourHours * pm_rate;
         const pmRatesell = (totalLabourFactorHrs * labour_rate) / (1 - labour_margin);
         const project_managing = pmRates * pmRatesell;
+
         const itemTotalPrice = items.reduce((sum, item) => sum + item.equip_total, 0);
+
         const subtotal = parseFloat((
           itemTotalPrice +
           sundries_cal +
           project_managing +
           installation_engineering
         ).toFixed(2));
+
         totalExcludingVAT += subtotal;
+
         return {
           bill: billName,
           items,
@@ -866,6 +921,7 @@ app.get('/print', async (req, res) => {
         };
       })
     };
+
     // VAT and final totals
     const vat = parseFloat((totalExcludingVAT * 0.15).toFixed(2));
     const totalIncludingVAT = parseFloat((totalExcludingVAT + vat).toFixed(2));
