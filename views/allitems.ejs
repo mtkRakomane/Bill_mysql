@@ -7,7 +7,7 @@
   <style>
     body { 
       background-color: whitesmoke;
-      font-size: 11px; /* 👈 Add this line */
+      font-size: 11px; 
     }
     table { width: 100%; border-collapse: collapse; }
     th, td { border: 1px solid black; padding: 8px; text-align: left; }
@@ -35,8 +35,14 @@
     .bill-header { background-color: #ddd; text-align: center; font-weight: bold; }
     .green-text { color: blue; font-weight: bold; }
     .green-text-head{color: cornflowerblue}
+     footer {
+      background-color: #343a40;
+      color: #ffffff;
+      text-align: center;
+      padding: 12px 0;
+      margin-top: auto;
+    }
   </style>
-  
 </head>
 <body>
   <%
@@ -126,5 +132,8 @@
       <a href="/">Back to Home</a>
     </div>
   </div>
+  <div class="footer">
+    <p>&copy; <%= new Date().getFullYear() %> Bidvest Protea Coin</p>
+</div>
 </body>
 </html>
