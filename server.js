@@ -6,10 +6,10 @@ const session = require('express-session');
 const app = express();
 
 const db = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
+  host: 'db4free.net',
+  user: 'masilo_96',
   password: 'Masilo@96',
-  database: 'quotings',
+  database: 'quotings_1',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
