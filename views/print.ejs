@@ -54,7 +54,7 @@
             <div class="card-body">
                 <div class="image-text-container">
                     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSLl5RFBWd70u8xNBu3mBTfHBq-Y1TzCuXJ5w&s" class="img-fluid mb-3" alt="Placeholder image" width="200px" height="200px">
-                    <div class="text-container" style="text-align: right;">
+                    <div class="text-container" style="text-align: right; font-size: 11px;">
                         <p>222 Witch-Hazel Avenue Highveld Techno Park</p>
                         <p>Centurion 0157</p>
                         <p>Tel +27 12665 8000</p>
@@ -67,11 +67,11 @@
         </div>
        
     <div >
-        <p><strong>To:</strong> <%= groupedItems.customer_name%></p>
-        <p><strong>ATT:</strong></p>
-        <p><strong>Email:</strong> <%= groupedItems.customer_email %></p>
+        <p style="font-size: 11px;"><strong>To:</strong> <%= groupedItems.customer_name%></p>
+        <p style="font-size: 11px;"><strong>ATT:</strong></p>
+        <p style="font-size: 11px;"><strong>Email:</strong> <%= groupedItems.customer_email %></p>
         <p style="font-size: 13px;"><strong>Date:</strong> <%= new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
-        <p><strong>Re: </strong> <%= groupedItems.job_description %></p>
+        <p style="font-size: 11px;"><strong>Re: </strong> <%= groupedItems.job_description %></p>
     </div>
     <hr>
     <p style="font-size: 12px;">Dear: <%= groupedItems.customer_name %> </p>
@@ -87,9 +87,9 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="background-color: rgb(67, 67, 161);"><%= bill.bill %></th>
+                      <th style="background-color: rgb(67, 67, 161); font-size: 12px;"><%= bill.bill %></th>
                     </tr>
-                    <tr>
+                    <tr style="font-size: 12px;">
                         <th>Item</th>
                         <th>Stock Code</th>
                         <th>Description</th>
@@ -100,17 +100,17 @@
                 </thead>
                 <tbody>
                     <% bill.items.forEach((item, index) => { %>
-                        <tr>
+                        <tr style="font-size: 12px;">
                             <td><%= index + 1 %></td>
                             <td><%= item.stock_code %></td>
                             <td><%= item.description %></td>
                             <td><%= item.qty %></td>
-                            <td> <%= formatAccounting(item.equip_total ) %></td>
+                            <td> <%= formatAccounting(item.total_price) %></td>
                             <td> <%= formatAccounting(item.total_price) %></td>
                         </tr>
                     <% }) %>
                 </tbody>
-                <tbody>
+                <tbody style="font-size: 12px;">
                   
                     <tr>
                         <td colspan="5"><strong>Sundries and Consumables:</strong></td>
@@ -140,7 +140,7 @@
             <th  style="background-color: rgb(4, 4, 43);"> </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody style="font-size: 12px;">
             <tr>
                 <td>
                   <div style="text-align: left; display: inline-block; width: 33%;"><strong>CAPEX Option:</strong></div>
@@ -157,13 +157,12 @@
           <tr>
             <td>
               <div style="text-align: center;"> <strong>Total Including VAT</strong> </div>  
-               <div style="text-align:right;">  <strong> <%= formatAccounting(groupedItems.totalIncludingVAT)  %></strong> </div>
+               <div style="text-align:right;">  <strong>  <%= formatAccounting(groupedItems.totalIncludingVAT)  %></strong> </div>
             </td>
           </tr>
         </tbody>
       </table>
     <p style="font-size: Bold; color: rgb(148, 10, 10); text-align: center;">Proposal Expiry Date: <span id="expiryDateSummary">Loading...</span></p>
-
     <p style="font-size: 12px">Terms and Conditions</p>
     <div class="terms">
         <div class="term" style="font-size: 12px">1. Delivery to be confirmed on placement of order.</div>
@@ -202,7 +201,7 @@
     </div>
     <hr>
     
-    <div class="signature">
+    <div class="signature" style="font-size: 12px;">
         <table style="width: 60%; margin: 0 auto; border: 1px solid #ccc; border-collapse: collapse; text-align: left;">
           <thead>
             <tr>
@@ -211,16 +210,13 @@
           </thead>
           <tbody>
             <tr>
-              <td>Print Name</td>
-              <td> __________________________ </td>
+              <td>Print Name</td>  
             </tr>
             <tr>
               <td>Date</td>
-              <td> __________________________</td>
             </tr>
             <tr>
               <td>Signature</td>
-              <td> __________________________</td>
             </tr>
             <tr>
               <td colspan="2" style="font-size: 12px; text-align: center;">
