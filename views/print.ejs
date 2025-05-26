@@ -48,7 +48,6 @@
         return isNegative ? `R (${formatted})` : `R ${formatted}`;
     }
 %>
-
     <div class="form-container"> 
         <div class="card-right">
             <div class="card-body">
@@ -65,7 +64,6 @@
                 </div>
             </div>
         </div>
-       
     <div >
         <p style="font-size: 11px;"><strong>To:</strong> <%= groupedItems.customer_name%></p>
         <p style="font-size: 11px;"><strong>ATT:</strong></p>
@@ -83,7 +81,6 @@
     </span>
     <% groupedItems.bills.forEach(bill => { %>
         <div>
-         
             <table>
                 <thead>
                     <tr>
@@ -105,13 +102,12 @@
                             <td><%= item.stock_code %></td>
                             <td><%= item.description %></td>
                             <td><%= item.qty %></td>
-                            <td> <%= formatAccounting(item.total_price) %></td>
+                            <td> <%= formatAccounting(item.equip_unit_rate) %></td>
                             <td> <%= formatAccounting(item.total_price) %></td>
                         </tr>
                     <% }) %>
                 </tbody>
                 <tbody style="font-size: 12px;">
-                  
                     <tr>
                         <td colspan="5"><strong>Sundries and Consumables:</strong></td>
                         <td><strong> <%= formatAccounting(bill.extras.Sundries ) %></strong></td>
@@ -131,8 +127,7 @@
                     </tr>
                 </tbody>
             </table>  
-        </div>
-        <hr />
+        </div>      
     <% }) %>
     <table border="1" cellpadding="10" cellspacing="0">
         <thead>
