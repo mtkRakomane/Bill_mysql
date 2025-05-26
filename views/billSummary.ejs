@@ -53,7 +53,7 @@
             <div class="card-body">
                 <div class="image-text-container">
                     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSLl5RFBWd70u8xNBu3mBTfHBq-Y1TzCuXJ5w&s" class="img-fluid mb-3" alt="Placeholder image" width="200px" height="200px">
-                    <div class="text-container" style="text-align: right;">
+                    <div class="text-container" style="text-align: right; font-size: 11px;">
                         <p>222 Witch-Hazel Avenue Highveld Techno Park</p>
                         <p>Centurion 0157</p>
                         <p>Tel +27 12665 8000</p>
@@ -85,31 +85,31 @@
     <thead>
       <tr>
         <th></th>
-        <th>DESCRIPTION</th>
-        <th>TOTAL</th>
+        <th style="font-size: 11px;">DESCRIPTION</th>
+        <th style="font-size: 11px;">TOTAL</th>
       </tr>
     </thead>
     <tbody>
       <% billSummaryData.bills.forEach((bill, index) => { %>
         <tr>
-          <td><%= index + 1 %></td> 
-          <td>Bill <%= index + 1 %>: <%= bill.bill %></td> 
-          <td> <%= formatAccounting(bill.bill_tot_selling) %></td>
+          <td style="font-size: 11px;"><%= index + 1 %></td> 
+          <td style="font-size: 11px;">Bill <%= index + 1 %>: <%= bill.bill %></td> 
+          <td style="font-size: 11px;"> <%= formatAccounting(bill.bill_tot_selling) %></td>
         </tr>
       <% }); %>
     </tbody>
     <tbody>
         <tr>
-            <td colspan="2"> <strong>Total (Excluding VAT)</strong></td>
-            <td> <%= formatAccounting(billSummaryData.totalSellingSum) %> </td>
+            <td colspan="2" style="font-size: 11px;"> <strong>Total (Excluding VAT)</strong></td>
+            <td style="font-size: 11px;"><strong> <%= formatAccounting(billSummaryData.totalSellingSum) %> </strong> </td>
         </tr>
         <tr>
-            <td colspan="2"> <strong>VAT (15%)</strong></td>
-            <td> <%= formatAccounting(billSummaryData.vatAmountForAll) %></td>
+            <td colspan="2" style="font-size: 11px;"> <strong>VAT (15%)</strong></td>
+            <td style="font-size: 11px;"><strong> <%= formatAccounting(billSummaryData.vatAmountForAll) %> </strong></td>
         </tr>
         <tr>
-            <td colspan="2"><strong>Total (Including VAT)</strong></td>
-            <td> <%= formatAccounting(billSummaryData.totalWithVat) %></td>
+            <td colspan="2" style="font-size: 11px;"><strong>Total (Including VAT)</strong></td>
+            <td style="font-size: 11px;"><strong> <%= formatAccounting(billSummaryData.totalWithVat) %> </strong> </td>
         </tr>
     </tbody>
   </table>
@@ -125,16 +125,13 @@
     </thead>
     <tbody>
         <tr>
-            <td>Print Name</td>
-            <td> __________________________ </td>
+            <td style="font-size: 11px;">Print Name</td>
         </tr>
         <tr>
-            <td>Date</td>
-            <td> __________________________</td>
+            <td style="font-size: 11px;">Date</td>
         </tr>
         <tr>
-            <td>Signature</td>
-            <td> __________________________</td>
+            <td style="font-size: 11px;">Signature</td>
         </tr>
         <tr>
             <td style="font-size: 12px" colspan="2" style="text-align: center;">By signing this acceptance, I confirm acceptance of the terms and conditions attached here!</td>
@@ -154,7 +151,7 @@
 </div>
 
     <div class="footer">
-        <p>&copy; <%= new Date().getFullYear() %> Bidvest Protea Coin</p>
+        <p style="font-size: 11px;">&copy; <%= new Date().getFullYear() %> Bidvest Protea Coin</p>
     </div>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
