@@ -9,7 +9,6 @@
     <style>
           body {
             font-family: Arial, sans-serif;
-            margin: 20px;
             background-color: whitesmoke; 
         }
         table {
@@ -37,7 +36,7 @@
     </style>
 </head>
 <body>
-      <nav class="navbar navbar-expand-sm bg-primary navbar-light">
+      <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
     <div class="container-fluid">
       <a class="navbar-brand">
             <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSLl5RFBWd70u8xNBu3mBTfHBq-Y1TzCuXJ5w&s" class="img-fluid mb-3 ms-auto" alt="Placeholder image" width="50px" height="50px">                 
@@ -60,6 +59,7 @@
         return isNegative ? `R (${formatted})` : `R ${formatted}`;
     }
 %>
+<br>
   <h2>Bill Summary</h2>
   <table>
       <thead>
@@ -110,9 +110,9 @@
       </tbody>
   </table>
   <a href="/billSummary" class="btn btn-success">Go to BillSummary</a>
+  <br>
   <div class="footer">
     <p>&copy; <%= new Date().getFullYear() %> Bidvest Protea Coin</p>
 </div>
 </body>
 </html>
- 
