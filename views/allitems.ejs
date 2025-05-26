@@ -47,7 +47,7 @@
   </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-sm bg-primary navbar-light">
+    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
     <div class="container-fluid">
       <a class="navbar-brand">
             <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSLl5RFBWd70u8xNBu3mBTfHBq-Y1TzCuXJ5w&s" class="img-fluid mb-3 ms-auto" alt="Placeholder image" width="50px" height="50px">                 
@@ -79,7 +79,6 @@
         </tr>
         <tr>
           <th>Item</th>
-          <th>Bill</th>
           <th>Stock Code</th>
           <th style="width: 100px; font-size: 11px;">Description</th>
           <th>Quantity</th>
@@ -104,7 +103,6 @@
         <% groupedItems[bill].forEach((item, idx) => { %>
           <tr>
             <td><%= idx + 1 %></td>
-            <td><%= item.bill %></td>
             <td><%= item.stock_code %></td>
             <td style="width: 100px; font-size: 11px;"><%= item.description %></td>
             <td><%= item.qty %></td>
