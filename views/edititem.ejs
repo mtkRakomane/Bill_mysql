@@ -9,7 +9,7 @@
 <body>
     <div class="container">
     <h1>Edit Item</h1>
-    <form action="/edit-item/<%= item.id_items %>" method="POST">
+    <form id="edit-item" action="/edit-item/<%= item.id_items %>" method="POST">
 
         <div class="form-group">
         <label for="stock_code">Stock Code:</label>
@@ -23,6 +23,17 @@
         <label for="qty">Quantity:</label>
         <input type="text" id="qty" name="qty" placeholder="Quantity:" value="<%= item.qty %>" required>
         </div>
+          <div class="form-group">
+        <label for="labour_margin">Labour Margin:</label>
+        <input type="text" id="labour_margin" name="labour_margin" placeholder="Labour Margin:" value="<%= item.labour_margin%>" required>
+        </div>
+          <div class="form-group">
+        <label for="equipment_margin">Equipment Margin:</label>
+        <input type="text" id="equipment_margin" name="equipment_margin" placeholder="Equipment Margin:" value="<%= item.equipment_margin %>" required>
+        </div>
+         <!-- Hidden fields to store the factors -->
+       <input type="hidden" id="labour_factor_hrs" name="labour_factor_hrs" value="<%= item.labour_factor_hrs %>">
+<input type="hidden" id="maint_lab_factor" name="maint_lab_factor" value="<%= item.maint_lab_factor %>">
         <div class="form-group">
             <label for="product_type">Select Product Type:</label>
             <select id="product_type" name="product_type" required>
@@ -41,6 +52,7 @@
         <% }); %>
       </select>
     </div>
+<input type="hidden" id="install_diff_factor" name="install_diff_factor" value="<%= item.install_diff_factor %>">
           <div class="form-group">
           <label for="unit_cost">Unit Cost:</label>
           <input type="text" name="unit_cost" placeholder="Unit Cost:" required autocomplete="off" step="0.01"><br>
@@ -59,5 +71,55 @@
        <br> 
     <a href="/allitems">Cancel</a>
 </div>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+ <script>
+    $(document).ready(function () {
+      const installDifficultyTypes = <%- JSON.stringify(installDifficultyTypes) %>;
+  
+      $("#product_type").change(function () {
+        var selectedProduct = $(this).val();
+        var selectedProductData = <%- JSON.stringify(productTypes) %>.find(function (product) {
+          return product.product_type === selectedProduct;
+        });
+  
+        if (selectedProductData) {
+          $("#labour_factor_hrs").val(selectedProductData.labour_factor_hrs);
+          $("#maint_lab_factor").val(selectedProductData.maint_lab_factor);
+        }
+      });
+  
+      $('#install_diff').change(function () {
+        const selectedDiff = $(this).val();
+  
+        const selectedDiffData = installDifficultyTypes.find(function (item) {
+          return item.install_diff === selectedDiff;
+        });
+  
+        if (selectedDiffData) {
+          $('#install_diff_factor').val(selectedDiffData.install_diff_factor);
+        }
+      });
+
+     $('#edit-item').on('submit', function (e) {
+  e.preventDefault();
+
+  const formData = $(this).serialize();
+  const actionUrl = $(this).attr('action'); 
+
+  $.ajax({
+    url: actionUrl,
+    type: 'POST',
+    data: formData,
+    success: function (response) {
+      alert('Item updated successfully');
+      window.location.href = '/allitems';
+    },
+    error: function (error) {
+      alert('Error: ' + error.statusText);
+    }
+  });
+});
+});
+  </script>
 </body>
 </html>
