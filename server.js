@@ -743,7 +743,6 @@ app.get('/overview', async (req, res) => {
       })
     };
 
-    // Totals across all bills
     const parseAndRound = (value) => parseFloat(parseFloat(value || 0).toFixed(2));
     const totalLabourHours = groupedItems.bills.reduce((sum, b) => sum + parseFloat(b.totalLabourHours || 0), 0);
     groupedItems.projectHrs = totalLabourHours.toFixed(2);
@@ -835,14 +834,11 @@ app.get('/print', async (req, res) => {
           const qty = parseFloat(item.qty) || 0;
           const labourFactorHrs = parseFloat(item.labour_factor_hrs) || 0;
           const unitCost = parseFloat(item.unit_cost) || 0;
-
           const equip_unit_rate = parseFloat((unitCost / (1 - equipmentMargin)).toFixed(2));
           const equip_total = parseFloat((equip_unit_rate * qty).toFixed(2));
-
           const sellRate = labour_rate / (1 - labourMargin);
           const unitLabRate = parseFloat((sellRate * labourFactorHrs).toFixed(2));
           const total_labour = parseFloat((unitLabRate * qty).toFixed(2));
-
           return {
             ...item,
             equip_unit_rate,
@@ -854,7 +850,6 @@ app.get('/print', async (req, res) => {
             equipment_margin: equipmentMargin
           };
         });
-
         const installation_engineering = items.reduce((sum, item) => sum + parseFloat(item.total_labour), 0);
         const totalLabourHours = items.reduce((sum, item) => sum + (parseFloat(item.labour_factor_hrs || 0) * parseFloat(item.qty || 0)), 0);
         const totalLabourFactorHrs = items.reduce((sum, item) => sum + parseFloat(item.labour_factor_hrs || 0), 0);
@@ -864,21 +859,16 @@ app.get('/print', async (req, res) => {
           : 0;
 
         const sundries_cal = parseFloat((totalLabourHours * equip_sundries / (1 - avgLabourMargin)).toFixed(2));
-        const pmRates = totalLabourHours * pm_rate;
-        const pmRatesell = (totalLabourFactorHrs * labour_rate) / (1 - avgLabourMargin);
-        const project_managing = parseFloat((pmRates * pmRatesell).toFixed(2));
 
+        const project_managing = parseFloat(((labour_rate * totalLabourHours * pm_rate) / (1 - avgLabourMargin)).toFixed(2));
         const itemTotalPrice = items.reduce((sum, item) => sum + item.equip_total, 0);
-
         const subtotal = parseFloat((
           itemTotalPrice +
           sundries_cal +
           project_managing +
           installation_engineering
         ).toFixed(2));
-
         totalExcludingVAT += subtotal;
-
         return {
           bill: billName,
           items,
@@ -893,7 +883,6 @@ app.get('/print', async (req, res) => {
       })
     };
 
-    // VAT and final totals
     const vat = parseFloat((totalExcludingVAT * 0.15).toFixed(2));
     const totalIncludingVAT = parseFloat((totalExcludingVAT + vat).toFixed(2));
 
