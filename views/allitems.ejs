@@ -109,8 +109,8 @@
             <td style="width: 100px; font-size: 11px;"><%= item.product_type %></td>
             <td><%= item.install_diff %></td>
             <td style="width: 90px; font-size: 11px;"><%= formatAccounting(item.unit_cost) %></td>
-            <td class="green-text" style="width: 25px; font-size: 11px;">25%</td>
-            <td class="green-text" style="width: 25px; font-size: 11px;">25%</td>
+            <td class="green-text" style="width: 25px; font-size: 11px;"> <%= item.equipment_margin%> </td>
+            <td class="green-text" style="width: 25px; font-size: 11px;"><%= item.labour_margin %></td>
             <td style="width: 90px; font-size: 11px;"><%= formatAccounting(item.unitLabRate) %></td>
             <td style="width: 90px; font-size: 11px;"><%= formatAccounting(item.equip_unit_rate) %></td>
             <td style="width: 90px; font-size: 11px;"><%= formatAccounting(item.total_labour) %></td>
