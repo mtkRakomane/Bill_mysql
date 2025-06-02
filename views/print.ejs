@@ -48,13 +48,14 @@
         return isNegative ? `R (${formatted})` : `R ${formatted}`;
     }
 %>
+
     <div class="form-container"> 
         <div class="card-right">
             <div class="card-body">
                 <div class="image-text-container">
                     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSLl5RFBWd70u8xNBu3mBTfHBq-Y1TzCuXJ5w&s" class="img-fluid mb-3" alt="Placeholder image" width="200px" height="200px">
                     <div class="text-container" style="text-align: right; font-size: 11px;">
-                        <p>222 Witch-Hazel Avenue Highveld Techno Park</p>
+                        <p>1004 Teak Close & Witch-Hazel Ave, Highveld Techno Park</p>
                         <p>Centurion 0157</p>
                         <p>Tel +27 12665 8000</p>
                         <p>PO Box 68726 Highveld 0169</p>
@@ -64,6 +65,7 @@
                 </div>
             </div>
         </div>
+       
     <div >
         <p style="font-size: 11px;"><strong>To:</strong> <%= groupedItems.customer_name%></p>
         <p style="font-size: 11px;"><strong>ATT:</strong></p>
@@ -81,6 +83,7 @@
     </span>
     <% groupedItems.bills.forEach(bill => { %>
         <div>
+         
             <table>
                 <thead>
                     <tr>
@@ -108,6 +111,7 @@
                     <% }) %>
                 </tbody>
                 <tbody style="font-size: 12px;">
+                  
                     <tr>
                         <td colspan="5"><strong>Sundries and Consumables:</strong></td>
                         <td><strong> <%= formatAccounting(bill.extras.Sundries ) %></strong></td>
@@ -127,7 +131,8 @@
                     </tr>
                 </tbody>
             </table>  
-        </div>      
+        </div>
+      
     <% }) %>
     <table border="1" cellpadding="10" cellspacing="0">
         <thead>
@@ -224,7 +229,7 @@
         <p style="font-size: 12px; text-align: center;">Yours Faithfully</p>
         <p style="font-size: 12px; text-align: center;"><%= groupedItems.sale_person %></p>
         <p style="font-size: 12px; text-align: center;">Bidvest Protea Coin</p>
-        <p style="font-size: 12px; text-align: center;">Head Office, 16 Eddington Crescent, Highveld, Technopark, Centurion, 0157</p>
+        <p style="font-size: 12px; text-align: center;">1004 Teak Close & Witch-Hazel Ave, Highveld Techno Park Centurion, 0157</p>
         <p style="font-size: 12px; text-align: center;"><%= groupedItems.sale_cell %></p>
         <p style="font-size: 12px; text-align: center;">Office: +27 (0) 12 665 8000</p>
       </div>
