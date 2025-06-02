@@ -23,6 +23,10 @@
         <label for="qty">Quantity:</label>
         <input type="text" id="qty" name="qty" placeholder="Quantity:" value="<%= item.qty %>" required>
         </div>
+   <div class="form-group">
+          <label for="unit_cost">Unit Cost:</label>
+          <input type="text" name="unit_cost" placeholder="Unit Cost:" required autocomplete="off" step="0.01"><br>
+          </div>
           <div class="form-group">
         <label for="labour_margin">Labour Margin:</label>
         <input type="text" id="labour_margin" name="labour_margin" placeholder="Labour Margin:" value="<%= item.labour_margin%>" required>
@@ -53,10 +57,6 @@
       </select>
     </div>
 <input type="hidden" id="install_diff_factor" name="install_diff_factor" value="<%= item.install_diff_factor %>">
-          <div class="form-group">
-          <label for="unit_cost">Unit Cost:</label>
-          <input type="text" name="unit_cost" placeholder="Unit Cost:" required autocomplete="off" step="0.01"><br>
-          </div>
           <div class="form-group">
             <label for="supply">Supplier:</label>
             <select id="supply" name="supply" required>
