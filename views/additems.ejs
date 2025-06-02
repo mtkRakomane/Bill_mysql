@@ -6,7 +6,7 @@
   <title>Add Item</title>
   <link rel="stylesheet" href="/styles/styles.css">
 </head>
-<body>
+<body>  
   <div class="container">
     <h2>Add Item</h2>
     <form id="add-item-form" action="/additems" method="POST">
@@ -30,6 +30,14 @@
         <div class="form-group">
           <label for="unit_cost">Unit Cost:</label>
           <input type="text" name="unit_cost" placeholder="Unit Cost:" required autocomplete="off" step="0.01"><br>
+        </div>
+          <div class="form-group">
+          <label for="equipment_margin">Equipment Margin:</label>
+          <input type="text" name="equipment_margin" placeholder="Equipment Margin:" required autocomplete="off"><br>
+        </div>
+          <div class="form-group">
+          <label for="labour_margin">Labour Margin:</label>
+          <input type="text" name="labour_margin" placeholder="Labour Margin:" required autocomplete="off"><br>
         </div>
         <div class="form-group">
           <label for="product_type">Select Product Type:</label>
@@ -120,3 +128,4 @@
   </script>
 </body>
 </html>
+ 
