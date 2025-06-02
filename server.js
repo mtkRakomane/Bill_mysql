@@ -6,10 +6,10 @@ const session = require('express-session');
 const app = express();
 
 const db = mysql.createPool({
-  host: 'db4free.net',
-  user: 'masilo_96',
+  host: 'localhost',
+  user: 'root',
   password: 'Masilo@96',
-  database: 'quotings_1',
+  database: 'quotings',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -34,7 +34,6 @@ app.use(session({
   resave: false,
   saveUninitialized: true
 }));
-
 // ✅ Home (Login Page)
 app.get('/', async (req, res) => {
   try {
@@ -61,7 +60,6 @@ app.get('/signup', async (req, res) => {
     res.status(500).send('Error fetching data for signup');
   }
 });
-
 app.post('/signup', async (req, res) => {
   try {
     const { reference, job_description, customer_name, customer_cell, customer_email, sale_person, sale_cell, sale_email, saleRole } = req.body;
@@ -168,14 +166,14 @@ app.get('/additems', async (req, res) => {
     res.status(500).send('Server error while loading additems form.');
   }
 });
-// POST /additems
+// ✅POST /additems
 app.post('/additems', async (req, res) => {
   try {
     const {
       reference, bill, stock_code, description, qty,
       product_type, install_diff, install_diff_factor,
       unit_cost, supply, labour_hrs, labour_cost,
-      labour_factor_hrs, maint_lab_factor
+      labour_factor_hrs, maint_lab_factor, labour_margin, equipment_margin
     } = req.body;
     if (!reference) return res.status(400).send('Error: Reference is missing.');
     if (!bill) return res.status(400).send('Error: Bill is missing.');
@@ -203,16 +201,16 @@ app.post('/additems', async (req, res) => {
       `INSERT INTO Items (
         reference, bill, stock_code, description, qty, product_type,
         install_diff, install_diff_factor, unit_cost, supply,
-        labour_factor_hrs, maint_lab_factor
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        labour_factor_hrs, maint_lab_factor, labour_margin, equipment_margin
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         reference, bill, stock_code || '', description || '', qty || 0,
         product_type || '', install_diff || '', install_diff_factor || 0,
-        unit_cost || 0, supply || '', labour_factor_hrs || 0, maint_lab_factor || 0
+        unit_cost || 0, supply || '', labour_factor_hrs || 0, maint_lab_factor || 0, labour_margin || 0, equipment_margin || 0
       ]
     );
 
-    res.redirect('/homepage');
+    res.redirect('/additems');
   } catch (error) {
     console.error('Error inserting item:', error);
     res.status(500).send('Database error while processing request.');
@@ -221,41 +219,47 @@ app.post('/additems', async (req, res) => {
 // ✅ All items
 app.get('/allitems', async (req, res) => {
   const loggedInReference = req.session.user?.reference;
-
   if (!loggedInReference) {
     return res.status(401).send('Unauthorized: No reference found');
   }
-
   const query = 'SELECT * FROM Items WHERE reference = ? ORDER BY bill, reference';
-
   db.query(query, [loggedInReference], (error, results) => {
     if (error) {
       console.error('Database error:', error);
       return res.status(500).send('Database error');
     }
-
-    let groupedItems = {}; 
-    const equip_margin = 0.25; 
-    const  labour_margin = 0.25;
-    const labour_rate = 400; 
-    const sellRate = labour_rate / (1 - labour_margin); 
+    if (!results.length) {
+      return res.render('allitems', { groupedItems: {} });
+    }
+    const groupedItems = {};
+    const labourRate = 400;
     results.forEach(item => {
-      item.equip_unit_rate = parseFloat((item.unit_cost / (1 - equip_margin)).toFixed(2));
+      const labourMargin = parseFloat(item.labour_margin) / 100 || 0;
+      const equipmentMargin = parseFloat(item.equipment_margin) / 100 || 0;
+      item.labour_margin = labourMargin;
+      item.equipment_margin = equipmentMargin;
+      const safeLabourDivisor = 1 - labourMargin;
+      const sellRate = safeLabourDivisor !== 0 ? labourRate / safeLabourDivisor : 0;
+      item.equip_unit_rate = (1 - equipmentMargin) !== 0
+        ? parseFloat((item.unit_cost / (1 - equipmentMargin)).toFixed(2))
+        : 0;
       item.equip_total = parseFloat((item.equip_unit_rate * item.qty).toFixed(2));
       item.equipmentCost = parseFloat((item.unit_cost * item.qty).toFixed(2));
-      item.labour_cost = parseFloat((item.labour_factor_hrs * labour_rate * item.install_diff_factor).toFixed(2));
-      item.unitLabRate = parseFloat((item.labour_factor_hrs * sellRate).toFixed(2));
-      item.total_labour = parseFloat((item.unitLabRate * item.qty).toFixed(2))
+      item.labour_cost = parseFloat((item.labour_factor_hrs * labourRate * item.install_diff_factor).toFixed(2));
+      item.unitLabRate = parseFloat((item.labour_factor_hrs * sellRate * item.install_diff_factor).toFixed(2));
+      item.total_labour = parseFloat((item.unitLabRate * item.qty).toFixed(2));
       item.hwReplaceProv = item.maint_lab_factor > 0 ? item.equip_total : 0;
       if (!groupedItems[item.bill]) {
         groupedItems[item.bill] = [];
       }
+
       groupedItems[item.bill].push(item);
     });
 
     res.render('allitems', { groupedItems });
   });
 });
+
 // ✅ Delete All Items
 app.post('/delete-all-items/:reference', async (req, res) => {
   const { reference } = req.params;
@@ -301,12 +305,13 @@ app.get('/edit-item/:id', async (req, res) => {
     const installDifficultyTypes = await executeQuery('SELECT install_diff, install_diff_factor FROM InstallDifficultyType');
     const slaMlaTypes = await executeQuery('SELECT sla_mla FROM SlaMlaType');
     const validateNumTypes = await executeQuery('SELECT validate_num_days FROM ValidateNumType');
-    const productTypes = await executeQuery('SELECT product_type FROM ProductType');
+    const productTypes = await executeQuery('SELECT product_type, labour_factor_hrs, maint_lab_factor FROM ProductType');
     const supplyTypes = await executeQuery('SELECT supply FROM SupplyType');
 
     const query = `
       SELECT i.id_items, i.reference, i.stock_code, i.description, i.qty, 
-             i.product_type, i.install_diff, i.unit_cost, i.supply
+             i.product_type, i.labour_factor_hrs, i.maint_lab_factor, i.install_diff, i.install_diff_factor, i.unit_cost, i.supply,
+             i.labour_margin, i.equipment_margin
       FROM Items i
       JOIN quote_details q ON i.reference = q.reference
       WHERE i.id_items = ? AND i.reference = ?`;
@@ -338,13 +343,15 @@ app.post('/edit-item/:id', async (req, res) => {
   if (!userReference) {
     return res.status(403).send('Unauthorized access');
   }
-  const { stock_code,description, qty, product_type, install_diff, unit_cost, supply } = req.body;
+  const { stock_code, description, qty, product_type, install_diff, install_diff_factor,   unit_cost, supply, labour_factor_hrs, maint_lab_factor,labour_margin, equipment_margin } = req.body;
   const updateQuery = `
     UPDATE Items
-    SET stock_code = ?, description = ?, qty = ?, product_type = ?, install_diff = ?, unit_cost = ?, supply = ?
+    SET stock_code = ?, description = ?, qty = ?, product_type = ?,  install_diff = ?, install_diff_factor = ?, unit_cost = ?, supply = ?,
+     labour_factor_hrs = ?, maint_lab_factor = ?, labour_margin = ?, equipment_margin = ?
     WHERE id_items = ? AND reference = ?`;
   try {
-    const [updateResult] = await db.promise().execute(updateQuery, [stock_code, description, qty, product_type, install_diff, unit_cost, supply, itemId, userReference]);
+    const [updateResult] = await db.promise().execute(updateQuery, [stock_code, description, qty, product_type, 
+       install_diff, install_diff_factor, unit_cost, supply,  labour_factor_hrs, maint_lab_factor, labour_margin, equipment_margin, itemId, userReference]);
     if (updateResult.affectedRows === 0) {
       return res.status(404).send('Item not found or unauthorized');
     }
@@ -357,13 +364,13 @@ app.post('/edit-item/:id', async (req, res) => {
 // ✅ Billing Page
 app.get('/billing', async (req, res) => {
   const userRefNum = req.session.user?.reference;
-
   if (!userRefNum) return res.redirect('/');
 
   try {
     const itemsResult = await executeQuery(
       `SELECT i.bill, i.stock_code, i.description, i.qty, i.product_type, i.unit_cost, 
-              i.maint_lab_factor, i.labour_factor_hrs, i.  install_diff_factor,
+              i.maint_lab_factor, i.labour_factor_hrs, i.install_diff_factor, 
+              i.labour_margin, i.equipment_margin,
               q.customer_name, q.customer_email, q.sale_person, q.sale_cell, q.job_description
        FROM items i
        JOIN quote_details q ON i.reference = q.reference
@@ -371,23 +378,26 @@ app.get('/billing', async (req, res) => {
        ORDER BY i.bill, i.reference`,
       [userRefNum]
     );
+
     if (itemsResult.length === 0) return res.send('No items found for this reference.');
+
     const bills = itemsResult.reduce((acc, item) => {
       const bill = item.bill || 'Unknown Bill';
       if (!acc[bill]) acc[bill] = [];
       acc[bill].push(item);
       return acc;
     }, {});
+
     const extraCosts = {
       Sundries_and_Consumables: 1529.47,
       Project_Management: 1058.82,
       Installation_Commissioning_Engineering: 3150.30
     };
-    const equipmentMargin = 0.25;
-    const labour_rate = 400; 
-    const pm_rate = 0.15; 
-    const labour_margin = 0.25;
-    const equip_sundries = 0.03; 
+
+    const labour_rate = 400;
+    const pm_rate = 0.15;
+    const equip_sundries = 0.03;
+
     const groupedItems = {
       reference: userRefNum,
       customer_name: itemsResult[0]?.customer_name || '',
@@ -399,21 +409,30 @@ app.get('/billing', async (req, res) => {
         const items = bills[billName].map(item => {
           const qty = parseFloat(item.qty) || 0;
           const unitCost = parseFloat(item.unit_cost) || 0;
-          const labourFactorHrs = parseFloat(item.labour_factor_hrs) || 0;
-          const labourCost = parseFloat(item.labour_cost) || 0;
-          const maintLabFactor = parseFloat(item.maint_lab_factor) || 0;
-          const totalPrice = unitCost * qty;
+          const labourMargin = parseFloat(item.labour_margin) / 100 || 0;
+          const equipmentMargin = parseFloat(item.equipment_margin) / 100 || 0;
+
           const equipmentCost = unitCost * qty;
-          const equipmentSelling = (unitCost / (1 - equipmentMargin)) * qty;
-          item.total_labour = parseFloat((item.unitLabRate * parseFloat(item.qty || 0)).toFixed(2));
-          item.hwReplaceProv = item.maint_lab_factor > 0 ? item.equip_total : 0;
+          const equipmentSelling = (1 - equipmentMargin) !== 0
+            ? (unitCost / (1 - equipmentMargin)) * qty
+            : 0;
+
+          const sellRate = (1 - labourMargin) !== 0 ? labour_rate / (1 - labourMargin) : 0;
+          const unitLabRate = sellRate * (parseFloat(item.labour_factor_hrs) || 0) * (parseFloat(item.install_diff_factor) || 0);
+          const totalLabour = parseFloat((unitLabRate * qty).toFixed(2));
+
+          const hwReplaceProv = parseFloat(item.maint_lab_factor) > 0 ? equipmentSelling : 0;
+
           return {
             ...item,
-            total_price: totalPrice.toFixed(2),
+            equipment_margin: equipmentMargin,
+            labour_margin: labourMargin,
+            total_price: (unitCost * qty).toFixed(2),
             equipment_cost: equipmentCost.toFixed(2),
             equipment_selling: equipmentSelling.toFixed(2),
-            total_labour: item.total_labour,
-            hwReplaceProv: item.hwReplaceProv
+            total_labour: totalLabour,
+            unitLabRate: unitLabRate.toFixed(2),
+            hwReplaceProv: hwReplaceProv.toFixed(2)
           };
         });
 
@@ -434,29 +453,30 @@ app.get('/billing', async (req, res) => {
           return sum + (hrs * labour_rate * qty);
         }, 0);
 
-        const bill_labourSell = parseFloat(items.reduce((sum, item) => {
+        const bill_labourSell = items.reduce((sum, item) => {
           const hrs = parseFloat(item.labour_factor_hrs || 0);
           const qty = parseFloat(item.qty || 0);
-          const sellRate = labour_rate / (1 - labour_margin); 
+          const labourMargin = parseFloat(item.labour_margin) || 0;
+          const sellRate = (1 - labourMargin) !== 0 ? labour_rate / (1 - labourMargin) : 0;
           return sum + (hrs * qty * sellRate);
-        }, 0).toFixed(2));
-        
-        const totalLabourFactorHrs = items.reduce((sum, item) => {
-          return sum + parseFloat(item.labour_factor_hrs || 0);
         }, 0);
+
         const pmRates = totalLabourHours * pm_rate;
-        const pmRatesell = (totalLabourFactorHrs * labour_rate) / (1 - labour_margin);
-        const pm_cost = labour_rate * (totalLabourHours * pm_rate);
-        const pm_selling = pmRates * pmRatesell;
-        
+        const firstItemMargin = parseFloat(items[0]?.labour_margin) || 0;
+        const pmRatesell = (1 - firstItemMargin) !== 0 ? (totalLabourHours * labour_rate * pm_rate) / (1 - firstItemMargin) : 0;
+
+        const pm_cost = labour_rate * pmRates;
+        const pm_selling = pmRatesell;
 
         const sundries_cost = totalLabourHours * equip_sundries;
-        const sundries_selling = parseFloat((totalLabourHours * equip_sundries / (1 - labour_margin)).toFixed(2));
+        const sundries_selling = (1 - firstItemMargin) !== 0
+          ? parseFloat((sundries_cost / (1 - firstItemMargin)).toFixed(2))
+          : 0;
 
         const bill_tot_selling = bill_labourSell + bill_equipment_selling + pm_selling + sundries_selling;
-        const bill_tot_cost = bill_labourCost  + bill_equipment_cost + pm_cost + sundries_cost + totalLabourHours;
+        const bill_tot_cost = bill_labourCost + bill_equipment_cost + pm_cost + sundries_cost + totalLabourHours;
 
-        const hwReplace = items.reduce((sum, item) => sum + (item.hwReplaceProv || 0), 0);
+        const hwReplace = items.reduce((sum, item) => sum + parseFloat(item.hwReplaceProv || 0), 0);
 
         return {
           bill: billName,
@@ -468,22 +488,22 @@ app.get('/billing', async (req, res) => {
           bill_equipment_selling: bill_equipment_selling.toFixed(2),
           pm_cost: pm_cost.toFixed(2),
           pm_selling: pm_selling.toFixed(2),
-          pm_hrs: (totalLabourHours * pm_rate).toFixed(2),
+          pm_hrs: pmRates.toFixed(2),
           sundries_cost: sundries_cost.toFixed(2),
           sundries_selling: sundries_selling.toFixed(2),
           bill_tot_selling: bill_tot_selling.toFixed(2),
           bill_tot_cost: bill_tot_cost.toFixed(2),
-          bill_labourCost: bill_labourCost.toFixed(2), 
+          bill_labourCost: bill_labourCost.toFixed(2),
           bill_labourSell: bill_labourSell.toFixed(2),
-          hwReplace: hwReplace.toFixed(2) 
+          hwReplace: hwReplace.toFixed(2)
         };
       })
     };
 
-     req.session.calculatedBills = groupedItems.bills.map(b => ({
+    req.session.calculatedBills = groupedItems.bills.map(b => ({
       bill: b.bill,
       bill_tot_selling: b.bill_tot_selling,
-      hwReplace: b.hwReplace 
+      hwReplace: b.hwReplace
     }));
 
     res.render('billing', { groupedItems });
@@ -500,8 +520,8 @@ app.get('/billSummary', async (req, res) => {
   try {
     const itemsResult = await executeQuery(
       `SELECT i.bill, i.stock_code, i.description, i.qty, i.product_type, i.unit_cost, 
-              i.maint_lab_factor, i.labour_factor_hrs,
-              q.customer_name,q.customer_cell, q.customer_email, q.sale_person, q.sale_cell, q.job_description
+              i.maint_lab_factor, i.labour_factor_hrs, i.labour_margin, i.equipment_margin,
+              q.customer_name, q.customer_cell, q.customer_email, q.sale_person, q.sale_cell, q.job_description
        FROM items i
        JOIN quote_details q ON i.reference = q.reference
        WHERE i.reference = ?
@@ -509,9 +529,8 @@ app.get('/billSummary', async (req, res) => {
       [userRefNum]
     );
 
-    if (itemsResult.length === 0) return res.send('No items found for this reference.');
+    if (itemsResult.length === 0) return res.send('No Billing found for this reference.');
 
-    // Group items by bill
     const bills = itemsResult.reduce((acc, item) => {
       const bill = item.bill || 'Unknown Bill';
       if (!acc[bill]) acc[bill] = [];
@@ -519,45 +538,38 @@ app.get('/billSummary', async (req, res) => {
       return acc;
     }, {});
 
-    // Extra fixed cost values
     const extraCosts = {
       Sundries_and_Consumables: 1529.47,
       Project_Management: 1058.82,
       Installation_Commissioning_Engineering: 3150.30
     };
 
-    // Financial constants
-    const equipmentMargin = 0.25;
     const labour_rate = 400;
-    const pm_rate = 0.15;
-    const labour_margin = 0.25;
-    const equip_sundries = 0.03;
-
-    // Get pre-calculated bills from /billing session
     const savedBills = req.session.calculatedBills || [];
 
-    // Map stored values back to each bill for display
     const groupedBills = Object.keys(bills).map(billName => {
       const sessionBill = savedBills.find(b => b.bill === billName);
+
       const items = bills[billName].map(item => {
         const qty = parseFloat(item.qty) || 0;
         const unitCost = parseFloat(item.unit_cost) || 0;
         const labourFactorHrs = parseFloat(item.labour_factor_hrs) || 0;
-        const maintLabFactor = parseFloat(item.maint_lab_factor) || 0;
+        const labourMargin = parseFloat(item.labour_margin) || 0;
+        const equipmentMargin = parseFloat(item.equipment_margin) || 0;
 
         const totalPrice = unitCost * qty;
         const equipmentCost = unitCost * qty;
         const equipmentSelling = (unitCost / (1 - equipmentMargin)) * qty;
 
-        // Estimate total labour
-        const total_labour = parseFloat((labourFactorHrs * labour_rate * qty).toFixed(2));
+        const sellRate = labour_rate / (1 - labourMargin);
+        const total_labour = parseFloat((labourFactorHrs * sellRate * qty).toFixed(2));
 
         return {
           ...item,
           total_price: totalPrice.toFixed(2),
           equipment_cost: equipmentCost.toFixed(2),
           equipment_selling: equipmentSelling.toFixed(2),
-          total_labour: total_labour
+          total_labour
         };
       });
 
@@ -565,9 +577,7 @@ app.get('/billSummary', async (req, res) => {
       const bill_equipment_selling = items.reduce((sum, item) => sum + parseFloat(item.equipment_selling || 0), 0);
 
       let subtotal = items.reduce((sum, item) => sum + (parseFloat(item.unit_cost || 0) * parseFloat(item.qty || 0)), 0);
-      subtotal += extraCosts.Sundries_and_Consumables;
-      subtotal += extraCosts.Project_Management;
-      subtotal += extraCosts.Installation_Commissioning_Engineering;
+      subtotal += extraCosts.Sundries_and_Consumables + extraCosts.Project_Management + extraCosts.Installation_Commissioning_Engineering;
 
       const totalSelling = sessionBill?.bill_tot_selling
         ? parseFloat(sessionBill.bill_tot_selling)
@@ -588,8 +598,7 @@ app.get('/billSummary', async (req, res) => {
       };
     });
 
-    // Grand total calculation from session
-    const totalSellingSum = savedBills.reduce((sum, b) => sum + parseFloat(b.bill_tot_selling || 0), 0);
+    const totalSellingSum = groupedBills.reduce((sum, b) => sum + parseFloat(b.bill_tot_selling || 0), 0);
     const vatAmountForAll = totalSellingSum * 0.15;
     const totalWithVat = totalSellingSum + vatAmountForAll;
 
@@ -614,19 +623,16 @@ app.get('/billSummary', async (req, res) => {
     res.send('Error retrieving items data.');
   }
 });
-
 // ✅ Overview
 app.get('/overview', async (req, res) => {
   const userRefNum = req.session.user?.reference;
-
   if (!userRefNum) return res.redirect('/');
 
   try {
-    // Fetch items and relevant details from the database
     const itemsResult = await executeQuery(
       `SELECT i.bill, i.stock_code, i.description, i.qty, i.product_type, i.unit_cost, 
-              i.maint_lab_factor, i.labour_factor_hrs,
-              q.customer_name,q.customer_cell, q.customer_email, q.sale_person, q.sale_cell, q.job_description
+              i.maint_lab_factor, i.labour_factor_hrs, i.labour_margin, i.equipment_margin,
+              q.customer_name, q.customer_cell, q.customer_email, q.sale_person, q.sale_cell, q.job_description
        FROM items i
        JOIN quote_details q ON i.reference = q.reference
        WHERE i.reference = ? 
@@ -634,7 +640,9 @@ app.get('/overview', async (req, res) => {
       [userRefNum]
     );
 
-    if (itemsResult.length === 0) return res.send('No items found for this reference.');
+    if (itemsResult.length === 0) {
+      return res.send('No Bill found for this reference. (Add a Bill first)');
+    }
 
     const bills = itemsResult.reduce((acc, item) => {
       const bill = item.bill || 'Unknown Bill';
@@ -649,77 +657,68 @@ app.get('/overview', async (req, res) => {
       Installation_Commissioning_Engineering: 3150.30
     };
 
-    const equipmentMargin = 0.25;
-    const labour_rate = 400; 
-    const pm_rate = 0.15; 
-    const labour_margin = 0.25; 
-    const equip_sundries = 0.03; 
+    const labour_rate = 400;
+    const pm_rate = 0.15;
+    const equip_sundries = 0.03;
 
     const groupedItems = {
       reference: userRefNum,
-      customer_name: itemsResult[0]?.customer_name || '',
-      customer_cell: itemsResult[0]?.customer_cell || '',
-      customer_email: itemsResult[0]?.customer_email || '',
-      sale_person: itemsResult[0]?.sale_person || '',
-      sale_cell: itemsResult[0]?.sale_cell || '',
-      job_description: itemsResult[0]?.job_description || '',
-      bills: Object.keys(bills).map(billName => {
-        const items = bills[billName].map(item => {
+      customer_name: itemsResult[0].customer_name,
+      customer_cell: itemsResult[0].customer_cell,
+      customer_email: itemsResult[0].customer_email,
+      sale_person: itemsResult[0].sale_person,
+      sale_cell: itemsResult[0].sale_cell,
+      job_description: itemsResult[0].job_description,
+      bills: Object.entries(bills).map(([billName, billItems]) => {
+        const items = billItems.map(item => {
           const qty = parseFloat(item.qty) || 0;
           const unitCost = parseFloat(item.unit_cost) || 0;
           const labourFactorHrs = parseFloat(item.labour_factor_hrs) || 0;
-          const labourCost = parseFloat(item.labour_cost) || 0;
-          const maintLabFactor = parseFloat(item.maint_lab_factor) || 0;
+          const labour_margin = parseFloat(item.labour_margin) / 100 || 0.25;
+          const equipment_margin = parseFloat(item.equipment_margin) / 100 || 0.25;
 
-          const totalPrice = unitCost * qty;
-          const equipmentCost = unitCost * qty;
-          const equipmentSelling = (unitCost / (1 - equipmentMargin)) * qty;
+          const total_price = unitCost * qty;
+          const equipment_cost = unitCost * qty;
+          const equipment_selling = (unitCost / (1 - equipment_margin)) * qty;
 
-          item.total_labour = parseFloat((item.unitLabRate * parseFloat(item.qty || 0)).toFixed(2));
+          const total_labour = parseFloat((labourFactorHrs * labour_rate * qty).toFixed(2));
+          const unitLabRate = labour_rate / (1 - labour_margin);
+          const labour_selling = labourFactorHrs * unitLabRate * qty;
 
           return {
             ...item,
-            total_price: totalPrice.toFixed(2),
-            equipment_cost: equipmentCost.toFixed(2),
-            equipment_selling: equipmentSelling.toFixed(2),
-            total_labour: item.total_labour
+            qty,
+            unit_cost: unitCost,
+            total_price: total_price.toFixed(2),
+            equipment_cost: equipment_cost.toFixed(2),
+            equipment_selling: equipment_selling.toFixed(2),
+            total_labour: total_labour.toFixed(2),
+            labour_selling: labour_selling.toFixed(2),
+            labour_margin,
+            equipment_margin
           };
         });
 
-        const bill_equipment_cost = items.reduce((sum, item) => sum + parseFloat(item.equipment_cost || 0), 0);
-        const bill_equipment_selling = items.reduce((sum, item) => sum + parseFloat(item.equipment_selling || 0), 0);
-        let subtotal = items.reduce((sum, item) => sum + (parseFloat(item.unit_cost || 0) * parseFloat(item.qty || 0)), 0);
+        const sum = (field) =>
+          items.reduce((acc, item) => acc + parseFloat(item[field] || 0), 0);
 
-        subtotal += extraCosts.Sundries_and_Consumables;
-        subtotal += extraCosts.Project_Management;
-        subtotal += extraCosts.Installation_Commissioning_Engineering;
+        const totalLabourHours = sum('labour_factor_hrs');
+        const totalQty = sum('qty');
+        const totalMaintLabFactor = sum('maint_lab_factor');
 
-        const totalLabourHours = items.reduce((sum, item) => sum + (parseFloat(item.labour_factor_hrs || 0) * parseFloat(item.qty || 0)), 0);
-        const totalMaintLabFactor = items.reduce((sum, item) => sum + (parseFloat(item.maint_lab_factor || 0) * parseFloat(item.qty || 0)), 0);
+        const pm_cost = labour_rate * (totalLabourHours * pm_rate);
+        const pm_selling = (labour_rate * totalLabourHours * pm_rate) / (1 - (items[0].labour_margin || 0.25));
+        const sundries_cost = totalLabourHours * equip_sundries;
+        const sundries_selling = sundries_cost / (1 - (items[0].equipment_margin || 0.25));
 
         const bill_labourCost = items.reduce((sum, item) => {
-          const hrs = parseFloat(item.labour_factor_hrs || 0);
-          const qty = parseFloat(item.qty || 0);
-          return sum + (hrs * labour_rate * qty);
+          return sum + parseFloat(item.total_labour || 0);
         }, 0);
 
-        const bill_labourSell = parseFloat(items.reduce((sum, item) => {
-          const hrs = parseFloat(item.labour_factor_hrs || 0);
-          const qty = parseFloat(item.qty || 0);
-          const sellRate = labour_rate / (1 - labour_margin); 
-          return sum + (hrs * qty * sellRate);
-        }, 0).toFixed(2));
-
-     const totalLabourFactorHrs = items.reduce((sum, item) => {
-          return sum + parseFloat(item.labour_factor_hrs || 0);
-        }, 0);
-        const pmRates = totalLabourHours * pm_rate;
-        const pmRatesell = (totalLabourFactorHrs * labour_rate) / (1 - labour_margin);
-        const pm_cost = labour_rate * (totalLabourHours * pm_rate);
-        const pm_selling = pmRates * pmRatesell;
-        
-        const sundries_cost = totalLabourHours * equip_sundries;
-        const sundries_selling = parseFloat((totalLabourHours * equip_sundries / (1 - labour_margin)).toFixed(2));
+        const bill_labourSell = sum('labour_selling');
+        const bill_equipment_cost = sum('equipment_cost');
+        const bill_equipment_selling = sum('equipment_selling');
+        const subtotal = sum('total_price') + Object.values(extraCosts).reduce((a, b) => a + b, 0);
 
         const bill_tot_selling = bill_labourSell + bill_equipment_selling + pm_selling + sundries_selling;
         const bill_tot_cost = bill_labourCost + bill_equipment_cost + pm_cost + sundries_cost + totalLabourHours;
@@ -734,84 +733,53 @@ app.get('/overview', async (req, res) => {
           bill_equipment_selling: bill_equipment_selling.toFixed(2),
           pm_cost: pm_cost.toFixed(2),
           pm_selling: pm_selling.toFixed(2),
-          pm_hrs: (totalLabourHours * pm_rate).toFixed(2),
           sundries_cost: sundries_cost.toFixed(2),
           sundries_selling: sundries_selling.toFixed(2),
-          bill_tot_selling: bill_tot_selling.toFixed(2),
-          bill_tot_cost: bill_tot_cost.toFixed(2),
           bill_labourCost: bill_labourCost.toFixed(2),
-          bill_labourSell: bill_labourSell.toFixed(2)
+          bill_labourSell: bill_labourSell.toFixed(2),
+          bill_tot_selling: bill_tot_selling.toFixed(2),
+          bill_tot_cost: bill_tot_cost.toFixed(2)
         };
       })
     };
 
-     const totalLabourHours = Object.values(groupedItems.bills).reduce((sum, bill) => sum + parseFloat(bill.totalLabourHours || 0), 0);
-     const projectDays = totalLabourHours / 8;  
-     const projectWeeks = projectDays / 5;  
- 
-     groupedItems.projectHrs = totalLabourHours.toFixed(2);
-     groupedItems.projectDays = projectDays.toFixed(2);
-     groupedItems.projectWeeks = projectWeeks.toFixed(2);
- 
-const parseAndRound = (value) => Number(parseFloat(value || 0).toFixed(2));
+    // Totals across all bills
+    const parseAndRound = (value) => parseFloat(parseFloat(value || 0).toFixed(2));
+    const totalLabourHours = groupedItems.bills.reduce((sum, b) => sum + parseFloat(b.totalLabourHours || 0), 0);
+    groupedItems.projectHrs = totalLabourHours.toFixed(2);
+    groupedItems.projectDays = (totalLabourHours / 8).toFixed(2);
+    groupedItems.projectWeeks = (totalLabourHours / 40).toFixed(2);
 
-const totals = {
-    bill_equipment_cost: parseAndRound(groupedItems.bills.reduce((sum, bill) => sum + parseFloat(bill.bill_equipment_cost || 0), 0)),
-    bill_equipment_selling: parseAndRound(groupedItems.bills.reduce((sum, bill) => sum + parseFloat(bill.bill_equipment_selling || 0), 0)),
-    bill_labourCost: parseAndRound(groupedItems.bills.reduce((sum, bill) => sum + parseFloat(bill.bill_labourCost || 0), 0)),
-    bill_labourSell: parseAndRound(groupedItems.bills.reduce((sum, bill) => sum + parseFloat(bill.bill_labourSell || 0), 0)),
-    pm_cost: parseAndRound(groupedItems.bills.reduce((sum, bill) => sum + parseFloat(bill.pm_cost || 0), 0)),
-    pm_selling: parseAndRound(groupedItems.bills.reduce((sum, bill) => sum + parseFloat(bill.pm_selling || 0), 0)),
-    sundries_cost: parseAndRound(groupedItems.bills.reduce((sum, bill) => sum + parseFloat(bill.sundries_cost || 0), 0)),
-    sundries_selling: parseAndRound(groupedItems.bills.reduce((sum, bill) => sum + parseFloat(bill.sundries_selling || 0), 0))
-};
+    const totals = ['bill_equipment_cost', 'bill_equipment_selling', 'bill_labourCost', 'bill_labourSell', 'pm_cost', 'pm_selling', 'sundries_cost', 'sundries_selling']
+      .reduce((acc, key) => {
+        acc[key] = parseAndRound(groupedItems.bills.reduce((sum, b) => sum + parseFloat(b[key] || 0), 0));
+        return acc;
+      }, {});
 
-totals.totalSellProject = parseAndRound(
-    totals.bill_equipment_selling + 
-    totals.bill_labourSell + 
-    totals.sundries_selling + 
-    totals.pm_selling
-);
+    totals.totalSellProject = parseAndRound(
+      totals.bill_equipment_selling + totals.bill_labourSell + totals.pm_selling + totals.sundries_selling
+    );
 
-totals.totalCostProject = parseAndRound(
-    totals.bill_equipment_cost + 
-    totals.bill_labourCost + 
-    totals.sundries_cost + 
-    totals.pm_cost
-);
+    totals.totalCostProject = parseAndRound(
+      totals.bill_equipment_cost + totals.bill_labourCost + totals.pm_cost + totals.sundries_cost
+    );
 
-    totals.gmEquip = ((totals.bill_equipment_selling - totals.bill_equipment_cost) / totals.bill_equipment_selling) * 100;
-    totals.gmLabour = ((totals.bill_labourSell - totals.bill_labourCost) / totals.bill_labourSell ) * 100;
-    totals.gmSundries = ((totals.sundries_selling - totals.sundries_cost) / totals.sundries_selling) * 100;
-    totals.gmPm = ((totals.pm_selling - totals.pm_cost) / totals.pm_selling) * 100;
+    totals.totalGrossMargin = parseAndRound(totals.totalSellProject - totals.totalCostProject);
+    totals.actualGrossMargin = ((totals.totalGrossMargin / totals.totalSellProject) * 100).toFixed(2);
 
-    totals.gmEquip = totals.gmEquip.toFixed(2);
-    totals.gmLabour = totals.gmLabour.toFixed(2);
-    totals.gmSundries = totals.gmSundries.toFixed(2);
-    totals.gmPm = totals.gmPm.toFixed(2);
+    totals.gmEquip = ((totals.bill_equipment_selling - totals.bill_equipment_cost) / totals.bill_equipment_selling * 100).toFixed(2);
+    totals.gmLabour = ((totals.bill_labourSell - totals.bill_labourCost) / totals.bill_labourSell * 100).toFixed(2);
+    totals.gmPm = ((totals.pm_selling - totals.pm_cost) / totals.pm_selling * 100).toFixed(2);
+    totals.gmSundries = ((totals.sundries_selling - totals.sundries_cost) / totals.sundries_selling * 100).toFixed(2);
 
-    totals.pEquipment = (totals.bill_equipment_selling / totals.totalSellProject) * 100;
-    totals.pLabour = (totals.bill_labourSell / totals.totalSellProject) * 100;
-    totals.pSundries = (totals.sundries_selling / totals.totalSellProject) * 100;
-    totals.pProjectM = (totals.pm_selling / totals.totalSellProject) * 100;
-
-    totals.pEquipment = totals.pEquipment.toFixed(2);
-    totals.pLabour = totals.pLabour.toFixed(2);
-    totals.pSundries = totals.pSundries.toFixed(2);
-    totals.pProjectM = totals.pProjectM.toFixed(2);
+    totals.pEquipment = ((totals.bill_equipment_selling / totals.totalSellProject) * 100).toFixed(2);
+    totals.pLabour = ((totals.bill_labourSell / totals.totalSellProject) * 100).toFixed(2);
+    totals.pProjectM = ((totals.pm_selling / totals.totalSellProject) * 100).toFixed(2);
+    totals.pSundries = ((totals.sundries_selling / totals.totalSellProject) * 100).toFixed(2);
 
     const vat = 0.15;
-    totals.totalTax = totals.totalSellProject * vat;
-    totals.totalVatSell = totals.totalSellProject + totals.totalTax;
-
-totals.totalTax = totals.totalTax.toFixed(2);
-totals.totalVatSell = totals.totalVatSell.toFixed(2);
-
-totals.totalGrossMargin = totals.totalSellProject - totals.totalCostProject;
-totals.actualGrossMargin = ((totals.totalGrossMargin) / totals.totalSellProject) * 100;
-
-totals.totalGrossMargin = totals.totalGrossMargin.toFixed(2);
-totals.actualGrossMargin = totals.actualGrossMargin.toFixed(2);
+    totals.totalTax = (totals.totalSellProject * vat).toFixed(2);
+    totals.totalVatSell = (totals.totalSellProject + parseFloat(totals.totalTax)).toFixed(2);
 
     groupedItems.referenceTotals = totals;
 
@@ -819,9 +787,10 @@ totals.actualGrossMargin = totals.actualGrossMargin.toFixed(2);
 
   } catch (error) {
     console.error('Error fetching items:', error);
-    res.send('Error retrieving items data.');
+    res.status(500).send('Error retrieving items data.');
   }
 });
+
 // ✅ Print Page
 app.get('/print', async (req, res) => {
   const userRefNum = req.session.user?.reference;
@@ -829,7 +798,8 @@ app.get('/print', async (req, res) => {
 
   try {
     const itemsResult = await executeQuery(`
-      SELECT i.bill, i.stock_code, i.description, i.qty, i.product_type, i.unit_cost, i.maint_lab_factor, i.labour_factor_hrs,
+      SELECT i.bill, i.stock_code, i.description, i.qty, i.product_type, i.unit_cost, 
+             i.maint_lab_factor, i.labour_factor_hrs, i.labour_margin, i.equipment_margin,
              q.customer_name, q.customer_email, q.sale_person, q.sale_cell, q.job_description
       FROM items i
       JOIN quote_details q ON i.reference = q.reference
@@ -839,12 +809,9 @@ app.get('/print', async (req, res) => {
 
     if (itemsResult.length === 0) return res.send('No items found for this reference.');
 
-    const equip_margin = 0.25;
-    const labour_margin = 0.25;
     const labour_rate = 400;       
     const pm_rate = 0.15;           
     const equip_sundries = 0.03;    
-
     let totalExcludingVAT = 0;
 
     const bills = itemsResult.reduce((acc, item) => {
@@ -863,12 +830,18 @@ app.get('/print', async (req, res) => {
       job_description: itemsResult[0]?.job_description || '',
       bills: Object.keys(bills).map(billName => {
         const items = bills[billName].map(item => {
-          const equip_unit_rate = parseFloat((item.unit_cost / (1 - equip_margin)).toFixed(2));
-          const equip_total = parseFloat((equip_unit_rate * item.qty).toFixed(2));
+          const equipmentMargin = parseFloat(item.equipment_margin) / 100 || 0;
+          const labourMargin = parseFloat(item.labour_margin) / 100 || 0;
+          const qty = parseFloat(item.qty) || 0;
+          const labourFactorHrs = parseFloat(item.labour_factor_hrs) || 0;
+          const unitCost = parseFloat(item.unit_cost) || 0;
 
-          const sellRate = labour_rate / (1 - labour_margin); 
-          const unitLabRate = parseFloat(sellRate || 0) * parseFloat(item.labour_factor_hrs || 0);
-          const total_labour = unitLabRate * item.qty;
+          const equip_unit_rate = parseFloat((unitCost / (1 - equipmentMargin)).toFixed(2));
+          const equip_total = parseFloat((equip_unit_rate * qty).toFixed(2));
+
+          const sellRate = labour_rate / (1 - labourMargin);
+          const unitLabRate = parseFloat((sellRate * labourFactorHrs).toFixed(2));
+          const total_labour = parseFloat((unitLabRate * qty).toFixed(2));
 
           return {
             ...item,
@@ -877,25 +850,23 @@ app.get('/print', async (req, res) => {
             total_price: equip_total.toFixed(2),
             unitLabRate: unitLabRate.toFixed(2),
             total_labour: total_labour.toFixed(2),
+            labour_margin: labourMargin,
+            equipment_margin: equipmentMargin
           };
         });
 
-        const installation_engineering = items.reduce((sum, item) => {
-          const totalLabourForItem = parseFloat(item.total_labour || 0);
-          return sum + totalLabourForItem;
-        }, 0);
-
+        const installation_engineering = items.reduce((sum, item) => sum + parseFloat(item.total_labour), 0);
         const totalLabourHours = items.reduce((sum, item) => sum + (parseFloat(item.labour_factor_hrs || 0) * parseFloat(item.qty || 0)), 0);
-       
-        const totalLabourFactorHrs = items.reduce((sum, item) => {
-          return sum + parseFloat(item.labour_factor_hrs || 0);
-        }, 0);
+        const totalLabourFactorHrs = items.reduce((sum, item) => sum + parseFloat(item.labour_factor_hrs || 0), 0);
 
-        const sundries_cal = parseFloat((totalLabourHours * equip_sundries / (1 - labour_margin)).toFixed(2));
+        const avgLabourMargin = items.length > 0
+          ? items.reduce((sum, item) => sum + item.labour_margin, 0) / items.length
+          : 0;
 
+        const sundries_cal = parseFloat((totalLabourHours * equip_sundries / (1 - avgLabourMargin)).toFixed(2));
         const pmRates = totalLabourHours * pm_rate;
-        const pmRatesell = (totalLabourFactorHrs * labour_rate) / (1 - labour_margin);
-        const project_managing = pmRates * pmRatesell;
+        const pmRatesell = (totalLabourFactorHrs * labour_rate) / (1 - avgLabourMargin);
+        const project_managing = parseFloat((pmRates * pmRatesell).toFixed(2));
 
         const itemTotalPrice = items.reduce((sum, item) => sum + item.equip_total, 0);
 
@@ -936,7 +907,6 @@ app.get('/print', async (req, res) => {
     res.status(500).send('Error retrieving items data.');
   }
 });
-
 // ✅ Start Server
 app.listen(1200, () => {
   console.log('Server running on http://localhost:1200');
